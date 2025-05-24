@@ -18,6 +18,8 @@ export class WindowManager {
     }
     
     openAppWindow(app) {
+        console.log('WindowManager: Opening window for app:', app.name);
+        
         // Check if window is already open
         const existingWindow = this.windows.find(w => w.appId === app.id);
         if (existingWindow) {
@@ -28,10 +30,14 @@ export class WindowManager {
         // Get saved state or use defaults
         const savedState = this.windowStates[app.id] || {
             position: { x: 100 + this.windows.length * 30, y: 100 + this.windows.length * 30 },
-            size: { width: 600, height: 400 },
+            size: { width: Math.max(600, 200), height: Math.max(400, 200) },
             minimized: false,
             maximized: false
         };
+        
+        // Ensure minimum size
+        savedState.size.width = Math.max(savedState.size.width, 200);
+        savedState.size.height = Math.max(savedState.size.height, 200);
         
         // Create window element
         const windowElement = this.createWindowElement(app);
@@ -42,6 +48,11 @@ export class WindowManager {
         windowElement.style.top = `${savedState.position.y}px`;
         windowElement.style.width = `${savedState.size.width}px`;
         windowElement.style.height = `${savedState.size.height}px`;
+        
+        // Add glass effect
+        windowElement.style.backdropFilter = 'blur(10px)';
+        windowElement.style.background = 'rgba(255, 255, 255, 0.1)';
+        windowElement.style.border = '1px solid rgba(255, 255, 255, 0.2)';
         
         // Add to windows array
         const windowData = {
@@ -67,6 +78,7 @@ export class WindowManager {
         // Add search suggestion
         this.desktop.searchManager.addSearchSuggestion(app);
         
+        console.log('Window opened successfully for:', app.name);
         return windowData;
     }
     
@@ -84,7 +96,74 @@ export class WindowManager {
         iconElement.textContent = app.icon;
         nameElement.textContent = app.name;
         
+        // Apply theme color to header
+        const header = windowElement.querySelector('.window-header');
+        const themeColor = this.desktop.settingsManager.getSetting('themeColor') || '#007AFF';
+        header.style.backgroundColor = themeColor;
+        header.style.color = '#ffffff';
+        
+        // Make window resizable
+        this.makeResizable(windowElement);
+        
         return windowElement;
+    }
+    
+    makeResizable(windowElement) {
+        const resizeHandle = document.createElement('div');
+        resizeHandle.className = 'resize-handle';
+        resizeHandle.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(-45deg, transparent 0px, transparent 6px, #666 6px, #666 10px, transparent 10px);
+            cursor: nw-resize;
+            z-index: 10;
+        `;
+        
+        windowElement.appendChild(resizeHandle);
+        
+        let isResizing = false;
+        let startX, startY, startWidth, startHeight;
+        
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = parseInt(document.defaultView.getComputedStyle(windowElement).width, 10);
+            startHeight = parseInt(document.defaultView.getComputedStyle(windowElement).height, 10);
+            
+            document.addEventListener('mousemove', handleResize);
+            document.addEventListener('mouseup', stopResize);
+            e.preventDefault();
+        });
+        
+        const handleResize = (e) => {
+            if (!isResizing) return;
+            
+            const newWidth = Math.max(200, startWidth + e.clientX - startX);
+            const newHeight = Math.max(200, startHeight + e.clientY - startY);
+            
+            windowElement.style.width = newWidth + 'px';
+            windowElement.style.height = newHeight + 'px';
+        };
+        
+        const stopResize = () => {
+            isResizing = false;
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+            
+            // Save new size
+            const windowData = this.windows.find(w => w.element === windowElement);
+            if (windowData) {
+                windowData.size = {
+                    width: windowElement.offsetWidth,
+                    height: windowElement.offsetHeight
+                };
+                this.saveWindowState(windowData.appId, windowData);
+            }
+        };
     }
     
     setupWindowEvents(windowElement, windowData) {
@@ -94,9 +173,10 @@ export class WindowManager {
         // Window dragging with improved performance
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
-        let lastMoveTime = 0;
         
         header.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('window-btn')) return;
+            
             isDragging = true;
             const rect = windowElement.getBoundingClientRect();
             dragOffset = {
@@ -107,42 +187,38 @@ export class WindowManager {
             this.focusWindow(windowElement);
             windowElement.style.transition = 'none';
             
+            const handleMouseMove = (e) => {
+                if (!isDragging) return;
+                
+                requestAnimationFrame(() => {
+                    const x = e.clientX - dragOffset.x;
+                    const y = e.clientY - dragOffset.y;
+                    
+                    // Keep window within screen bounds
+                    const maxX = window.innerWidth - windowElement.offsetWidth;
+                    const maxY = window.innerHeight - windowElement.offsetHeight;
+                    
+                    const newX = Math.max(0, Math.min(x, maxX));
+                    const newY = Math.max(0, Math.min(y, maxY));
+                    
+                    windowElement.style.left = `${newX}px`;
+                    windowElement.style.top = `${newY}px`;
+                    
+                    windowData.position = { x: newX, y: newY };
+                });
+            };
+            
+            const handleMouseUp = () => {
+                isDragging = false;
+                windowElement.style.transition = 'var(--transition)';
+                this.saveWindowState(windowData.appId, windowData);
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+            
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
         });
-        
-        const handleMouseMove = (e) => {
-            if (!isDragging) return;
-            
-            const now = Date.now();
-            if (now - lastMoveTime < 16) return; // Throttle to 60fps
-            lastMoveTime = now;
-            
-            requestAnimationFrame(() => {
-                const x = e.clientX - dragOffset.x;
-                const y = e.clientY - dragOffset.y;
-                
-                // Keep window within screen bounds
-                const maxX = window.innerWidth - windowElement.offsetWidth;
-                const maxY = window.innerHeight - windowElement.offsetHeight;
-                
-                const newX = Math.max(0, Math.min(x, maxX));
-                const newY = Math.max(0, Math.min(y, maxY));
-                
-                windowElement.style.left = `${newX}px`;
-                windowElement.style.top = `${newY}px`;
-                
-                windowData.position = { x: newX, y: newY };
-            });
-        };
-        
-        const handleMouseUp = () => {
-            isDragging = false;
-            windowElement.style.transition = 'var(--transition)';
-            this.saveWindowState(windowData.appId, windowData);
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
         
         // Window focus
         windowElement.addEventListener('mousedown', () => {
@@ -163,8 +239,8 @@ export class WindowManager {
         const resizeObserver = new ResizeObserver(() => {
             if (!windowData.maximized) {
                 windowData.size = {
-                    width: windowElement.offsetWidth,
-                    height: windowElement.offsetHeight
+                    width: Math.max(200, windowElement.offsetWidth),
+                    height: Math.max(200, windowElement.offsetHeight)
                 };
                 this.saveWindowState(windowData.appId, windowData);
             }
@@ -358,5 +434,14 @@ export class WindowManager {
             
             this.saveWindowState(windowData.appId, windowData);
         });
+    }
+    
+    cycleWindows() {
+        const visibleWindows = this.getOpenWindows();
+        if (visibleWindows.length <= 1) return;
+        
+        const currentIndex = visibleWindows.findIndex(w => w.element === this.activeWindow);
+        const nextIndex = (currentIndex + 1) % visibleWindows.length;
+        this.focusWindow(visibleWindows[nextIndex].element);
     }
 }

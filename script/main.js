@@ -28,6 +28,7 @@ class DesktopEnvironment {
     
     init() {
         this.setupEventListeners();
+        this.setupDesktopContextMenu();
         this.updateClock();
         this.loadAppsFromStorage();
         this.settingsManager.loadSettings();
@@ -41,7 +42,7 @@ class DesktopEnvironment {
     }
     
     setupEventListeners() {
-        // Header buttons - FIXED: Export düğmesi kaldırıldı
+        // Header buttons
         document.getElementById('addBtn').addEventListener('click', () => {
             this.modalManager.openModal('addModal');
         });
@@ -50,7 +51,7 @@ class DesktopEnvironment {
             this.modalManager.openModal('settingsModal');
         });
         
-        // Search functionality - FIXED: Arama sonuçları artık açılacak
+        // Search functionality
         document.getElementById('searchInput').addEventListener('input', (e) => {
             this.searchManager.handleSearch(e.target.value);
         });
@@ -62,14 +63,15 @@ class DesktopEnvironment {
             }
         });
         
-        // Global keyboard shortcuts - FIXED: Ctrl+N ve Ctrl+, kısayolları
+        // Global keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey || e.metaKey) {
                 switch(e.key) {
-                    case 'n':
                     case 'N':
-                        e.preventDefault();
-                        this.modalManager.openModal('addModal');
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            this.modalManager.openModal('addModal');
+                        }
                         break;
                     case ',':
                         e.preventDefault();
@@ -79,6 +81,10 @@ class DesktopEnvironment {
                     case 'F':
                         e.preventDefault();
                         document.getElementById('searchInput').focus();
+                        break;
+                    case 'Tab':
+                        e.preventDefault();
+                        this.windowManager.cycleWindows();
                         break;
                 }
             }
@@ -90,14 +96,141 @@ class DesktopEnvironment {
             }
         });
         
-        // Prevent context menu on desktop
-        document.getElementById('desktopCanvas').addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-        });
-        
         // Hide context menu on click
         document.addEventListener('click', () => {
             this.contextMenuManager.hideMenu();
+        });
+    }
+    
+    setupDesktopContextMenu() {
+        const desktop = document.getElementById('desktopCanvas');
+        
+        desktop.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.showDesktopContextMenu(e.clientX, e.clientY);
+        });
+        
+        // Mobile long press support
+        let longPressTimer;
+        desktop.addEventListener('touchstart', (e) => {
+            if (e.target === desktop) {
+                longPressTimer = setTimeout(() => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    this.showDesktopContextMenu(touch.clientX, touch.clientY);
+                }, 800);
+            }
+        });
+        
+        desktop.addEventListener('touchend', () => {
+            clearTimeout(longPressTimer);
+        });
+        
+        desktop.addEventListener('touchmove', () => {
+            clearTimeout(longPressTimer);
+        });
+    }
+    
+    showDesktopContextMenu(x, y) {
+        const menu = document.createElement('div');
+        menu.className = 'context-menu desktop-context-menu active';
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
+        menu.style.zIndex = '9999';
+        
+        const lang = this.languageManager;
+        menu.innerHTML = `
+            <div class="context-item" id="desktopNewApp">
+                <span>➕</span>
+                <span data-tr="new_app">${lang.get('new_app')}</span>
+            </div>
+            <div class="context-item" id="desktopSettings">
+                <span>⚙️</span>
+                <span data-tr="settings">${lang.get('settings')}</span>
+            </div>
+            <div class="context-item" id="desktopArrange">
+                <span>📋</span>
+                <span data-tr="arrange_icons">${lang.get('arrange_icons')}</span>
+            </div>
+            <div class="context-item" id="desktopRefresh">
+                <span>🔄</span>
+                <span data-tr="refresh">${lang.get('refresh')}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(menu);
+        
+        // Add event listeners
+        menu.querySelector('#desktopNewApp').addEventListener('click', () => {
+            this.modalManager.openModal('addModal');
+            menu.remove();
+        });
+        
+        menu.querySelector('#desktopSettings').addEventListener('click', () => {
+            this.modalManager.openModal('settingsModal');
+            menu.remove();
+        });
+        
+        menu.querySelector('#desktopArrange').addEventListener('click', () => {
+            this.arrangeIcons();
+            menu.remove();
+        });
+        
+        menu.querySelector('#desktopRefresh').addEventListener('click', () => {
+            this.refreshDesktop();
+            menu.remove();
+        });
+        
+        // Remove menu when clicking elsewhere
+        setTimeout(() => {
+            document.addEventListener('click', () => menu.remove(), { once: true });
+        }, 100);
+        
+        // Adjust position if needed
+        const rect = menu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) {
+            menu.style.left = `${window.innerWidth - rect.width - 10}px`;
+        }
+        if (rect.bottom > window.innerHeight) {
+            menu.style.top = `${window.innerHeight - rect.height - 10}px`;
+        }
+    }
+    
+    arrangeIcons() {
+        const icons = document.querySelectorAll('.desktop-icon');
+        const gridSize = 100;
+        let col = 0;
+        let row = 0;
+        
+        icons.forEach((icon, index) => {
+            const x = 50 + col * gridSize;
+            const y = 50 + row * gridSize;
+            
+            icon.style.left = `${x}px`;
+            icon.style.top = `${y}px`;
+            
+            // Update app position
+            const appId = icon.getAttribute('data-app-id');
+            const app = this.apps.find(a => a.id === appId);
+            if (app) {
+                app.position = { x, y };
+            }
+            
+            col++;
+            if (col >= Math.floor((window.innerWidth - 100) / gridSize)) {
+                col = 0;
+                row++;
+            }
+        });
+        
+        this.saveApps();
+    }
+    
+    refreshDesktop() {
+        const desktop = document.getElementById('desktopCanvas');
+        desktop.innerHTML = '';
+        this.apps.forEach(app => {
+            this.appManager.createDesktopIcon(app);
         });
     }
     
@@ -151,7 +284,6 @@ class DesktopEnvironment {
     loadLastOpenWindow() {
         const lastOpenAppId = localStorage.getItem('last_open_window');
         if (lastOpenAppId) {
-            // Delay opening to ensure everything is loaded
             setTimeout(() => {
                 const app = this.apps.find(a => a.id === lastOpenAppId);
                 if (app) {
@@ -223,7 +355,7 @@ class DesktopEnvironment {
                 iconElement.querySelector('.icon-label').textContent = updates.name;
             }
             
-            // Update open windows immediately - FIXED: Hemen güncellenir
+            // Update open windows immediately
             const windowData = this.windowManager.windows.find(w => w.appId === appId);
             if (windowData) {
                 // Update window title
@@ -260,10 +392,10 @@ class DesktopEnvironment {
         this.windowManager.closeAppWindow(appId);
     }
     
-    // FIXED: Tek tıklama ile açılır
     openApp(appId) {
         const app = this.apps.find(a => a.id === appId);
         if (app) {
+            console.log('Opening app:', app.name);
             this.windowManager.openAppWindow(app);
             this.lastOpenWindow = appId;
             localStorage.setItem('last_open_window', appId);
@@ -275,14 +407,6 @@ class DesktopEnvironment {
             app.name.toLowerCase().includes(query.toLowerCase())
         );
     }
-    
-    // FIXED: Sadece zip export kaldırıldı
-    exportProjectCode() {
-        // Bu fonksiyon artık kullanılmıyor
-        console.log('Export function removed');
-    }
-    
-    // ... keep existing code (getIndexHtmlContent, getCssContent, etc.)
 }
 
 // Initialize the desktop environment when DOM is loaded

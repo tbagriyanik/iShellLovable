@@ -1,4 +1,3 @@
-
 export class LanguageManager {
     constructor(desktop) {
         this.desktop = desktop;
@@ -21,6 +20,8 @@ export class LanguageManager {
                 theme: 'Tema',
                 language: 'Dil',
                 display: 'Görünüm',
+                time: 'Saat',
+                data: 'Veri',
                 theme_color: 'Tema Rengi',
                 background_color: 'Arkaplan Rengi',
                 select_language: 'Dil Seçin',
@@ -32,8 +33,10 @@ export class LanguageManager {
                 import_settings: 'Ayarları İçe Aktar',
                 export_apps: 'Uygulamaları Dışa Aktar',
                 import_apps: 'Uygulamaları İçe Aktar',
+                backup_restore: 'Yedekleme ve Geri Yükleme',
+                import_data: 'Veri İçe Aktar',
                 
-                // Time Settings - FIXED: Çeviriler eklendi
+                // Time Settings
                 time_format: 'Saat Formatı',
                 show_seconds: 'Saniye Göster',
                 show_date: 'Tarih Göster',
@@ -46,17 +49,28 @@ export class LanguageManager {
                 edit: 'Düzenle',
                 delete: 'Sil',
                 open: 'Aç',
+                arrange_icons: 'Simgeleri Düzenle',
+                refresh: 'Yenile',
+                new_app: 'Yeni Uygulama',
                 
                 // Messages
                 generating_app: 'Uygulama oluşturuluyor...',
                 fill_all_fields: 'Lütfen tüm alanları doldurun!',
                 error_creating_app: 'Uygulama oluşturulurken hata oluştu!',
                 confirm_delete: 'Bu uygulamayı silmek istediğinizden emin misiniz?',
+                confirm_reset: 'Tüm ayarları sıfırlamak istediğinizden emin misiniz?',
+                data_imported: 'Veri başarıyla içe aktarıldı!',
+                invalid_data: 'Veri dosyası geçersiz!',
                 
                 // App Names
                 welcome: 'Hoş Geldiniz',
                 calculator: 'Hesap Makinesi',
                 notepad: 'Not Defteri',
+                
+                // Shortcuts
+                shortcut_new_app: 'Yeni Uygulama (Ctrl+Shift+N)',
+                shortcut_settings: 'Ayarlar (Ctrl+,)',
+                shortcut_search: 'Arama (Ctrl+F)',
                 
                 // Time
                 monday: 'Pazartesi',
@@ -84,6 +98,8 @@ export class LanguageManager {
                 theme: 'Theme',
                 language: 'Language',
                 display: 'Display',
+                time: 'Time',
+                data: 'Data',
                 theme_color: 'Theme Color',
                 background_color: 'Background Color',
                 select_language: 'Select Language',
@@ -95,8 +111,10 @@ export class LanguageManager {
                 import_settings: 'Import Settings',
                 export_apps: 'Export Apps',
                 import_apps: 'Import Apps',
+                backup_restore: 'Backup and Restore',
+                import_data: 'Import Data',
                 
-                // Time Settings - FIXED: Çeviriler eklendi
+                // Time Settings
                 time_format: 'Time Format',
                 show_seconds: 'Show Seconds',
                 show_date: 'Show Date',
@@ -109,17 +127,28 @@ export class LanguageManager {
                 edit: 'Edit',
                 delete: 'Delete',
                 open: 'Open',
+                arrange_icons: 'Arrange Icons',
+                refresh: 'Refresh',
+                new_app: 'New App',
                 
                 // Messages
                 generating_app: 'Generating app...',
                 fill_all_fields: 'Please fill all fields!',
                 error_creating_app: 'Error creating app!',
                 confirm_delete: 'Are you sure you want to delete this app?',
+                confirm_reset: 'Are you sure you want to reset all settings?',
+                data_imported: 'Data imported successfully!',
+                invalid_data: 'Invalid data file!',
                 
                 // App Names
                 welcome: 'Welcome',
                 calculator: 'Calculator',
                 notepad: 'Notepad',
+                
+                // Shortcuts
+                shortcut_new_app: 'New App (Ctrl+Shift+N)',
+                shortcut_settings: 'Settings (Ctrl+,)',
+                shortcut_search: 'Search (Ctrl+F)',
                 
                 // Time
                 monday: 'Monday',
@@ -174,6 +203,16 @@ export class LanguageManager {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.placeholder = this.get('search_placeholder');
+        }
+        
+        // Update tooltips
+        const addBtn = document.getElementById('addBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (addBtn) {
+            addBtn.setAttribute('data-tooltip', this.get('shortcut_new_app'));
+        }
+        if (settingsBtn) {
+            settingsBtn.setAttribute('data-tooltip', this.get('shortcut_settings'));
         }
     }
     

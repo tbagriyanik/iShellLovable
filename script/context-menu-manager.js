@@ -1,4 +1,3 @@
-
 export class ContextMenuManager {
     constructor(desktop) {
         this.desktop = desktop;
@@ -8,6 +7,14 @@ export class ContextMenuManager {
     }
     
     setupContextMenuEvents() {
+        // Open app
+        document.getElementById('openApp').addEventListener('click', () => {
+            if (this.currentAppId) {
+                this.desktop.openApp(this.currentAppId);
+            }
+            this.hideMenu();
+        });
+        
         // Edit app
         document.getElementById('editApp').addEventListener('click', () => {
             if (this.currentAppId) {
@@ -95,6 +102,19 @@ export class ContextMenuManager {
                                 <option value="📊" ${app.icon === '📊' ? 'selected' : ''}>📊 Grafik</option>
                                 <option value="🎮" ${app.icon === '🎮' ? 'selected' : ''}>🎮 Oyun</option>
                                 <option value="⚙️" ${app.icon === '⚙️' ? 'selected' : ''}>⚙️ Araç</option>
+                                <option value="🌐" ${app.icon === '🌐' ? 'selected' : ''}>🌐 Web</option>
+                                <option value="📧" ${app.icon === '📧' ? 'selected' : ''}>📧 E-posta</option>
+                                <option value="📷" ${app.icon === '📷' ? 'selected' : ''}>📷 Kamera</option>
+                                <option value="🎵" ${app.icon === '🎵' ? 'selected' : ''}>🎵 Müzik</option>
+                                <option value="🎬" ${app.icon === '🎬' ? 'selected' : ''}>🎬 Video</option>
+                                <option value="📁" ${app.icon === '📁' ? 'selected' : ''}>📁 Dosya</option>
+                                <option value="💬" ${app.icon === '💬' ? 'selected' : ''}>💬 Sohbet</option>
+                                <option value="🔐" ${app.icon === '🔐' ? 'selected' : ''}>🔐 Güvenlik</option>
+                                <option value="💰" ${app.icon === '💰' ? 'selected' : ''}>💰 Finans</option>
+                                <option value="📰" ${app.icon === '📰' ? 'selected' : ''}>📰 Haber</option>
+                                <option value="🏪" ${app.icon === '🏪' ? 'selected' : ''}>🏪 Alışveriş</option>
+                                <option value="🎯" ${app.icon === '🎯' ? 'selected' : ''}>🎯 Hedef</option>
+                                <option value="📈" ${app.icon === '📈' ? 'selected' : ''}>📈 Borsa</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -111,6 +131,12 @@ export class ContextMenuManager {
         `;
         
         document.body.appendChild(editModal);
+        
+        // Apply theme color to modal header
+        const header = editModal.querySelector('.modal-header');
+        const themeColor = this.desktop.settingsManager.getSetting('themeColor') || '#007AFF';
+        header.style.backgroundColor = themeColor;
+        header.style.color = '#ffffff';
         
         // Update translations
         this.desktop.languageManager.updateUI();

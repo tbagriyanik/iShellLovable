@@ -16,31 +16,117 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/themes.css">
+    
+    <style>
+        /* Tooltip styles */
+        [data-tooltip] {
+            position: relative;
+        }
+        
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10000;
+            margin-top: 5px;
+        }
+        
+        [data-tooltip]:hover::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-bottom-color: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+        }
+        
+        /* Circular icons */
+        .desktop-icon {
+            border-radius: 50% !important;
+            overflow: hidden;
+        }
+        
+        .desktop-icon .icon-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border-radius: 50%;
+        }
+        
+        .desktop-icon:hover {
+            box-shadow: 0 0 20px var(--primary-color) !important;
+            border-radius: 50% !important;
+        }
+        
+        /* Settings icon in header */
+        .settings-icon {
+            font-size: 18px;
+            margin-right: 8px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .settings-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Glass effect for windows */
+        .app-window {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Modal drag support */
+        .modal-content {
+            position: relative;
+        }
+        
+        .modal-header {
+            cursor: move;
+            user-select: none;
+        }
+        
+        /* Desktop context menu */
+        .desktop-context-menu {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Resize handle */
+        .resize-handle {
+            cursor: nw-resize !important;
+        }
+    </style>
 </head>
 <body>
     <!-- Header Bar -->
     <header class="header-bar">
         <div class="header-left">
-            <button id="addBtn" class="header-btn" data-tooltip="Uygulama Ekle (Ctrl+N)">
+            <button id="addBtn" class="header-btn" data-tooltip="">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 5v14M5 12h14"/>
                 </svg>
                 <span data-tr="add_app">Ekle</span>
-            </button>
-            <button id="settingsBtn" class="header-btn" data-tooltip="Ayarlar (Ctrl+,)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="m12 1 2.12 2.12L17 2l1 1-1.12 2.88L19 8l-1 1-2.88-1.12L13 11l-1-1 1.12-2.88L11 6l1-1 2.88 1.12L17 4l-1-1-2.88 1.12z"/>
-                </svg>
-                <span data-tr="settings">Ayarlar</span>
-            </button>
-            <button id="exportBtn" class="header-btn" data-tooltip="Kodu İndir">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7,10 12,15 17,10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                <span data-tr="export">İndir</span>
             </button>
         </div>
         <div class="header-center">
@@ -50,6 +136,9 @@
             </div>
         </div>
         <div class="header-right">
+            <div class="settings-icon" id="settingsBtn" data-tooltip="">
+                ⚙️
+            </div>
             <div class="time-display" id="timeDisplay"></div>
         </div>
     </header>
@@ -171,6 +260,9 @@
                             <option value="helvetica">Helvetica</option>
                             <option value="times">Times New Roman</option>
                             <option value="georgia">Georgia</option>
+                            <option value="playfair">Playfair Display</option>
+                            <option value="source-serif">Source Serif Pro</option>
+                            <option value="merriweather">Merriweather</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -185,22 +277,22 @@
                         <div class="form-group">
                             <label data-tr="time_format">Saat Formatı:</label>
                             <select id="timeFormat">
-                                <option value="24">24 Saat</option>
-                                <option value="12">12 Saat</option>
+                                <option value="24" data-tr="time_24_hour">24 Saat</option>
+                                <option value="12" data-tr="time_12_hour">12 Saat</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label data-tr="show_seconds">Saniye Göster:</label>
                             <select id="showSeconds">
-                                <option value="false">Hayır</option>
-                                <option value="true">Evet</option>
+                                <option value="false" data-tr="no">Hayır</option>
+                                <option value="true" data-tr="yes">Evet</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label data-tr="show_date">Tarih Göster:</label>
                             <select id="showDate">
-                                <option value="false">Hayır</option>
-                                <option value="true">Evet</option>
+                                <option value="false" data-tr="no">Hayır</option>
+                                <option value="true" data-tr="yes">Evet</option>
                             </select>
                         </div>
                     </div>

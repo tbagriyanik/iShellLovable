@@ -55,12 +55,12 @@ export class SettingsManager {
     applySettings() {
         const root = document.documentElement;
         
-        // Apply theme colors - FIXED: Tema rengi şimdi düzgün uygulanacak
+        // Apply theme colors
         root.style.setProperty('--primary-color', this.settings.themeColor);
         root.style.setProperty('--background-color', this.settings.backgroundColor);
         root.style.setProperty('--icon-size', `${this.settings.iconSize}px`);
         
-        // FIXED: Arkaplan rengi body'ye de uygulanır
+        // Apply background color to body
         document.body.style.backgroundColor = this.settings.backgroundColor;
         
         // Generate harmonious colors based on primary color
@@ -85,7 +85,10 @@ export class SettingsManager {
             'arial': '"Arial", "Helvetica Neue", Helvetica, sans-serif',
             'helvetica': '"Helvetica Neue", Helvetica, Arial, sans-serif',
             'times': '"Times New Roman", Times, serif',
-            'georgia': 'Georgia, "Times New Roman", serif'
+            'georgia': 'Georgia, "Times New Roman", serif',
+            'playfair': '"Playfair Display", Georgia, serif',
+            'source-serif': '"Source Serif Pro", Georgia, serif',
+            'merriweather': '"Merriweather", Georgia, serif'
         };
         
         const fontFamily = fontFamilies[this.settings.fontFamily] || fontFamilies.system;
@@ -100,15 +103,23 @@ export class SettingsManager {
         // Set language
         this.desktop.languageManager.setLanguage(this.settings.language);
         
-        // FIXED: Tüm pencere başlıklarını güncelle
+        // Update all window headers with theme color
         this.updateAllWindowHeaders();
     }
     
     updateAllWindowHeaders() {
-        // Tüm açık pencerelerin başlık çubuğu rengini güncelle
+        // Update all open window headers with theme color
         const windows = document.querySelectorAll('.app-window .window-header');
         windows.forEach(header => {
             header.style.backgroundColor = this.settings.themeColor;
+            header.style.color = '#ffffff';
+        });
+        
+        // Update modal headers
+        const modalHeaders = document.querySelectorAll('.modal-content .modal-header');
+        modalHeaders.forEach(header => {
+            header.style.backgroundColor = this.settings.themeColor;
+            header.style.color = '#ffffff';
         });
     }
     
@@ -213,20 +224,14 @@ export class SettingsManager {
     }
     
     resetSettings() {
-        const lang = this.desktop.languageManager.getCurrentLanguage();
-        const confirmMessage = lang === 'tr' 
-            ? 'Tüm ayarları sıfırlamak istediğinizden emin misiniz?'
-            : 'Are you sure you want to reset all settings?';
-            
+        const confirmMessage = this.desktop.languageManager.get('confirm_reset');
         if (confirm(confirmMessage)) {
             this.settings = { ...this.defaultSettings };
             localStorage.removeItem('desktop_settings');
             this.applySettings();
             this.loadSettingsToForm();
             
-            const successMessage = lang === 'tr' 
-                ? 'Tüm ayarlar sıfırlandı!'
-                : 'All settings have been reset!';
+            const successMessage = this.desktop.languageManager.get('data_imported');
             alert(successMessage);
         }
     }
@@ -282,17 +287,11 @@ export class SettingsManager {
                     console.log('Apps imported successfully');
                 }
                 
-                const lang = this.desktop.languageManager.getCurrentLanguage();
-                const message = lang === 'tr' 
-                    ? 'Veri başarıyla içe aktarıldı!'
-                    : 'Data imported successfully!';
+                const message = this.desktop.languageManager.get('data_imported');
                 alert(message);
             } catch (error) {
                 console.error('Error importing data:', error);
-                const lang = this.desktop.languageManager.getCurrentLanguage();
-                const message = lang === 'tr' 
-                    ? 'Veri dosyası geçersiz!'
-                    : 'Invalid data file!';
+                const message = this.desktop.languageManager.get('invalid_data');
                 alert(message);
             }
         };
