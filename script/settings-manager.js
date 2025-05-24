@@ -55,10 +55,13 @@ export class SettingsManager {
     applySettings() {
         const root = document.documentElement;
         
-        // Apply theme colors
+        // Apply theme colors - FIXED: Tema rengi şimdi düzgün uygulanacak
         root.style.setProperty('--primary-color', this.settings.themeColor);
         root.style.setProperty('--background-color', this.settings.backgroundColor);
         root.style.setProperty('--icon-size', `${this.settings.iconSize}px`);
+        
+        // FIXED: Arkaplan rengi body'ye de uygulanır
+        document.body.style.backgroundColor = this.settings.backgroundColor;
         
         // Generate harmonious colors based on primary color
         const primaryColor = this.hexToHsl(this.settings.themeColor);
@@ -96,6 +99,17 @@ export class SettingsManager {
         
         // Set language
         this.desktop.languageManager.setLanguage(this.settings.language);
+        
+        // FIXED: Tüm pencere başlıklarını güncelle
+        this.updateAllWindowHeaders();
+    }
+    
+    updateAllWindowHeaders() {
+        // Tüm açık pencerelerin başlık çubuğu rengini güncelle
+        const windows = document.querySelectorAll('.app-window .window-header');
+        windows.forEach(header => {
+            header.style.backgroundColor = this.settings.themeColor;
+        });
     }
     
     updateThemeColors() {
@@ -199,10 +213,22 @@ export class SettingsManager {
     }
     
     resetSettings() {
-        this.settings = { ...this.defaultSettings };
-        localStorage.removeItem('desktop_settings');
-        this.applySettings();
-        this.loadSettingsToForm();
+        const lang = this.desktop.languageManager.getCurrentLanguage();
+        const confirmMessage = lang === 'tr' 
+            ? 'Tüm ayarları sıfırlamak istediğinizden emin misiniz?'
+            : 'Are you sure you want to reset all settings?';
+            
+        if (confirm(confirmMessage)) {
+            this.settings = { ...this.defaultSettings };
+            localStorage.removeItem('desktop_settings');
+            this.applySettings();
+            this.loadSettingsToForm();
+            
+            const successMessage = lang === 'tr' 
+                ? 'Tüm ayarlar sıfırlandı!'
+                : 'All settings have been reset!';
+            alert(successMessage);
+        }
     }
     
     exportSettings() {

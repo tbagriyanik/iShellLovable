@@ -39,11 +39,11 @@ export class SearchManager {
         resultsContainer.innerHTML = '';
         
         if (results.length === 0) {
-            // Show appropriate "no results" message based on language
+            // FIXED: Dile göre uygun mesaj
             const lang = this.desktop.languageManager.getCurrentLanguage();
             const noResultsMessage = lang === 'tr' 
-                ? `"${query}" için sonuç bulunamadı`
-                : `No results found for "${query}"`;
+                ? `"${query}" için herhangi bir uygulama bulunamadı`
+                : `No applications found for "${query}"`;
             
             resultsContainer.innerHTML = `
                 <div class="search-result-item no-results">
@@ -60,6 +60,7 @@ export class SearchManager {
                     <span>${app.name}</span>
                 `;
                 
+                // FIXED: Arama sonuçlarına tıklama çalışacak
                 resultItem.addEventListener('click', () => {
                     this.desktop.openApp(app.id);
                     this.hideResults();

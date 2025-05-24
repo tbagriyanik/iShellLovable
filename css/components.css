@@ -400,7 +400,7 @@
     }
 }
 
-/* Tooltip */
+/* FIXED: Tooltip iyileştirildi - altında görünür */
 [data-tooltip] {
     position: relative;
 }
@@ -408,26 +408,71 @@
 [data-tooltip]:hover::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 100%;
+    top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.9);
     color: white;
-    padding: 6px 8px;
-    border-radius: 4px;
+    padding: 8px 12px;
+    border-radius: 6px;
     font-size: 12px;
     white-space: nowrap;
-    z-index: 1000;
-    margin-bottom: 5px;
+    z-index: 10000;
+    margin-top: 8px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 [data-tooltip]:hover::before {
     content: '';
     position: absolute;
-    bottom: 100%;
+    top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    border: 4px solid transparent;
-    border-top-color: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
+    border: 6px solid transparent;
+    border-bottom-color: rgba(0, 0, 0, 0.9);
+    z-index: 10000;
+    margin-top: 2px;
+}
+
+/* Search Results */
+.search-result-item {
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: var(--transition);
+    border-radius: 8px;
+    margin: 4px 8px;
+}
+
+.search-result-item:hover {
+    background: var(--background-color);
+}
+
+.search-result-item.no-results {
+    cursor: default;
+    opacity: 0.7;
+}
+
+.search-result-icon {
+    font-size: 20px;
+    width: 24px;
+    text-align: center;
+}
+
+/* Desktop Icon Improvements */
+.desktop-icon {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.desktop-icon:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.desktop-icon:active {
+    transform: translateY(0);
 }

@@ -27,10 +27,25 @@ export class LanguageManager {
                 font_family: 'Yazı Tipi',
                 icon_size: 'Simge Boyutu',
                 save: 'Kaydet',
+                reset_all: 'Tümünü Sıfırla',
+                export_settings: 'Ayarları Dışa Aktar',
+                import_settings: 'Ayarları İçe Aktar',
+                export_apps: 'Uygulamaları Dışa Aktar',
+                import_apps: 'Uygulamaları İçe Aktar',
+                
+                // Time Settings - FIXED: Çeviriler eklendi
+                time_format: 'Saat Formatı',
+                show_seconds: 'Saniye Göster',
+                show_date: 'Tarih Göster',
+                time_12_hour: '12 Saat',
+                time_24_hour: '24 Saat',
+                yes: 'Evet',
+                no: 'Hayır',
                 
                 // Context Menu
                 edit: 'Düzenle',
                 delete: 'Sil',
+                open: 'Aç',
                 
                 // Messages
                 generating_app: 'Uygulama oluşturuluyor...',
@@ -75,10 +90,25 @@ export class LanguageManager {
                 font_family: 'Font Family',
                 icon_size: 'Icon Size',
                 save: 'Save',
+                reset_all: 'Reset All',
+                export_settings: 'Export Settings',
+                import_settings: 'Import Settings',
+                export_apps: 'Export Apps',
+                import_apps: 'Import Apps',
+                
+                // Time Settings - FIXED: Çeviriler eklendi
+                time_format: 'Time Format',
+                show_seconds: 'Show Seconds',
+                show_date: 'Show Date',
+                time_12_hour: '12 Hour',
+                time_24_hour: '24 Hour',
+                yes: 'Yes',
+                no: 'No',
                 
                 // Context Menu
                 edit: 'Edit',
                 delete: 'Delete',
+                open: 'Open',
                 
                 // Messages
                 generating_app: 'Generating app...',
