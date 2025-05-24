@@ -1,0 +1,252 @@
+
+/* CSS Custom Properties for Theming */
+:root {
+    --primary-color: #007AFF;
+    --background-color: #F2F2F7;
+    --surface-color: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #6D6D70;
+    --border-color: #C6C6C8;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --border-radius: 12px;
+    --header-height: 60px;
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --icon-size: 80px;
+    --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--background-color);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+    user-select: none;
+}
+
+/* Header Bar */
+.header-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    background: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.header-left {
+    display: flex;
+    gap: 10px;
+}
+
+.header-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+}
+
+.header-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.header-btn svg {
+    stroke: currentColor;
+}
+
+/* Search Container */
+.search-container {
+    position: relative;
+    width: 400px;
+}
+
+#searchInput {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    background: var(--background-color);
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition);
+}
+
+#searchInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    margin-top: 4px;
+    box-shadow: var(--shadow);
+}
+
+.search-result-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.search-result-item:hover {
+    background: var(--background-color);
+}
+
+.search-result-icon {
+    font-size: 20px;
+}
+
+/* Time Display */
+.time-display {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Desktop Canvas */
+.desktop-canvas {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 20px;
+    overflow: hidden;
+}
+
+/* Desktop Icons */
+.desktop-icon {
+    position: absolute;
+    width: var(--icon-size);
+    height: calc(var(--icon-size) + 30px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.desktop-icon:hover {
+    transform: scale(1.05);
+}
+
+.desktop-icon.dragging {
+    z-index: 1000;
+    transform: scale(1.1);
+    opacity: 0.8;
+}
+
+.icon-image {
+    width: 60px;
+    height: 60px;
+    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 8px;
+    transition: var(--transition);
+}
+
+.icon-label {
+    font-size: 12px;
+    text-align: center;
+    color: var(--text-primary);
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 2px 8px;
+    border-radius: 6px;
+    backdrop-filter: blur(10px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header-bar {
+        padding: 0 10px;
+    }
+    
+    .search-container {
+        width: 250px;
+    }
+    
+    .header-btn span {
+        display: none;
+    }
+    
+    .desktop-canvas {
+        padding: 10px;
+    }
+    
+    :root {
+        --icon-size: 60px;
+    }
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Smooth Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.slide-down {
+    animation: slideDown 0.2s ease-out;
+}

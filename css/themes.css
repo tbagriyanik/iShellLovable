@@ -1,0 +1,153 @@
+
+/* Theme Variations */
+
+/* Dark Theme */
+.theme-dark {
+    --primary-color: #0A84FF;
+    --background-color: #000000;
+    --surface-color: #1C1C1E;
+    --text-primary: #FFFFFF;
+    --text-secondary: #8E8E93;
+    --border-color: #38383A;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Light Theme (Default) */
+.theme-light {
+    --primary-color: #007AFF;
+    --background-color: #F2F2F7;
+    --surface-color: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #6D6D70;
+    --border-color: #C6C6C8;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom Theme Colors */
+.theme-red {
+    --primary-color: #FF3B30;
+}
+
+.theme-green {
+    --primary-color: #34C759;
+}
+
+.theme-purple {
+    --primary-color: #AF52DE;
+}
+
+.theme-orange {
+    --primary-color: #FF9500;
+}
+
+.theme-pink {
+    --primary-color: #FF2D92;
+}
+
+/* Background Variations */
+.bg-gradient-1 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-2 {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bg-gradient-3 {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.bg-gradient-4 {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.bg-image {
+    background-image: url('/resim/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* Font Families */
+.font-system {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.font-arial {
+    font-family: Arial, sans-serif;
+}
+
+.font-helvetica {
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+.font-times {
+    font-family: 'Times New Roman', Times, serif;
+}
+
+.font-georgia {
+    font-family: Georgia, serif;
+}
+
+/* Animation Preferences */
+.reduced-motion {
+    --transition: none;
+}
+
+.reduced-motion * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+    --primary-color: #0000FF;
+    --background-color: #FFFFFF;
+    --surface-color: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #000000;
+    --border-color: #000000;
+}
+
+.high-contrast.theme-dark {
+    --primary-color: #00FFFF;
+    --background-color: #000000;
+    --surface-color: #000000;
+    --text-primary: #FFFFFF;
+    --text-secondary: #FFFFFF;
+    --border-color: #FFFFFF;
+}
+
+/* Responsive Theme Adjustments */
+@media (max-width: 768px) {
+    :root {
+        --border-radius: 8px;
+        --header-height: 50px;
+    }
+    
+    .modal-content {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-color: #0A84FF;
+        --background-color: #000000;
+        --surface-color: #1C1C1E;
+        --text-primary: #FFFFFF;
+        --text-secondary: #8E8E93;
+        --border-color: #38383A;
+        --shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

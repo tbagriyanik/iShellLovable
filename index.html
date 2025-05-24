@@ -1,26 +1,180 @@
+
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>icon-window-craft</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Desktop Environment</title>
+    <meta name="description" content="AI Destekli Masaüstü Ortamı" />
+    <link rel="icon" href="/resim/favicon.png" type="image/png">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/themes.css">
+</head>
+<body>
+    <!-- Header Bar -->
+    <header class="header-bar">
+        <div class="header-left">
+            <button id="addBtn" class="header-btn" data-tooltip="Uygulama Ekle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span>Ekle</span>
+            </button>
+            <button id="settingsBtn" class="header-btn" data-tooltip="Ayarlar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="m12 1 2.12 2.12L17 2l1 1-1.12 2.88L19 8l-1 1-2.88-1.12L13 11l-1-1 1.12-2.88L11 6l1-1 2.88 1.12L17 4l-1-1-2.88 1.12z"/>
+                </svg>
+                <span>Ayarlar</span>
+            </button>
+        </div>
+        <div class="header-center">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Uygulama ara..." autocomplete="off">
+                <div id="searchResults" class="search-results"></div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="time-display" id="timeDisplay"></div>
+        </div>
+    </header>
 
-    <meta property="og:title" content="icon-window-craft" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <!-- Desktop Canvas -->
+    <main class="desktop-canvas" id="desktopCanvas">
+        <!-- Desktop icons will be dynamically added here -->
+    </main>
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+    <!-- Add App Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-tr="add_app">Uygulama Ekle</h2>
+                <button class="modal-close" id="addModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addAppForm">
+                    <div class="form-group">
+                        <label for="appName" data-tr="app_name">Uygulama Adı:</label>
+                        <input type="text" id="appName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appPrompt" data-tr="ai_prompt">AI Prompt (Uygulama Açıklaması):</label>
+                        <textarea id="appPrompt" rows="4" placeholder="Örn: Basit bir hesap makinesi uygulaması yap" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="appIcon" data-tr="app_icon">Uygulama Simgesi:</label>
+                        <select id="appIcon">
+                            <option value="📱">📱 Mobil</option>
+                            <option value="🧮">🧮 Hesap Makinesi</option>
+                            <option value="📝">📝 Not Defteri</option>
+                            <option value="🎨">🎨 Sanat</option>
+                            <option value="📊">📊 Grafik</option>
+                            <option value="🎮">🎮 Oyun</option>
+                            <option value="⚙️">⚙️ Araç</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="addModalCancel" data-tr="cancel">İptal</button>
+                        <button type="submit" class="btn-primary" data-tr="create_app">Uygulamayı Oluştur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-  <body>
-    <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-tr="settings">Ayarlar</h2>
+                <button class="modal-close" id="settingsModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <button class="tab-btn active" data-tab="theme" data-tr="theme">Tema</button>
+                    <button class="tab-btn" data-tab="language" data-tr="language">Dil</button>
+                    <button class="tab-btn" data-tab="display" data-tr="display">Görünüm</button>
+                </div>
+                
+                <div class="tab-content active" id="themeTab">
+                    <div class="form-group">
+                        <label data-tr="theme_color">Tema Rengi:</label>
+                        <div class="color-picker">
+                            <input type="color" id="themeColor" value="#007AFF">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="background_color">Arkaplan Rengi:</label>
+                        <div class="color-picker">
+                            <input type="color" id="backgroundColor" value="#F2F2F7">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="languageTab">
+                    <div class="form-group">
+                        <label data-tr="select_language">Dil Seçin:</label>
+                        <select id="languageSelect">
+                            <option value="tr">Türkçe</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="displayTab">
+                    <div class="form-group">
+                        <label data-tr="font_family">Yazı Tipi:</label>
+                        <select id="fontFamily">
+                            <option value="system">Sistem Varsayılanı</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Georgia">Georgia</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="icon_size">Simge Boyutu:</label>
+                        <input type="range" id="iconSize" min="60" max="120" value="80">
+                        <span id="iconSizeValue">80px</span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="settingsModalCancel" data-tr="cancel">İptal</button>
+                    <button type="button" class="btn-primary" id="saveSettings" data-tr="save">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-item" id="editApp" data-tr="edit">Düzenle</div>
+        <div class="context-item" id="deleteApp" data-tr="delete">Sil</div>
+    </div>
+
+    <!-- App Window Template -->
+    <div id="appWindowTemplate" class="app-window" style="display: none;">
+        <div class="window-header">
+            <div class="window-title"></div>
+            <div class="window-controls">
+                <button class="window-btn minimize">−</button>
+                <button class="window-btn close">×</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <iframe class="app-iframe"></iframe>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p data-tr="generating_app">Uygulama oluşturuluyor...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="script/main.js"></script>
+</body>
 </html>
