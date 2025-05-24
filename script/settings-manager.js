@@ -47,22 +47,133 @@ export class SettingsManager {
     applySettings() {
         const root = document.documentElement;
         
-        // Apply theme colors
+        // Apply theme colors with better contrast calculation
         root.style.setProperty('--primary-color', this.settings.themeColor);
         root.style.setProperty('--background-color', this.settings.backgroundColor);
         root.style.setProperty('--icon-size', `${this.settings.iconSize}px`);
         
-        // Apply font family
-        const fontFamily = this.settings.fontFamily === 'system' 
-            ? '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-            : this.settings.fontFamily;
+        // Generate harmonious colors based on primary color
+        const primaryColor = this.hexToHsl(this.settings.themeColor);
+        const lighterColor = this.hslToHex(primaryColor.h, primaryColor.s, Math.min(primaryColor.l + 20, 95));
+        const darkerColor = this.hslToHex(primaryColor.h, primaryColor.s, Math.max(primaryColor.l - 20, 5));
+        
+        root.style.setProperty('--primary-light', lighterColor);
+        root.style.setProperty('--primary-dark', darkerColor);
+        
+        // Apply font family with better fallbacks
+        const fontFamilies = {
+            'system': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            'arial': '"Arial", "Helvetica Neue", Helvetica, sans-serif',
+            'helvetica': '"Helvetica Neue", Helvetica, Arial, sans-serif',
+            'times': '"Times New Roman", Times, serif',
+            'georgia': 'Georgia, "Times New Roman", serif',
+            'inter': '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+            'roboto': '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
+            'open-sans': '"Open Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+            'lato': '"Lato", -apple-system, BlinkMacSystemFont, sans-serif',
+            'montserrat': '"Montserrat", -apple-system, BlinkMacSystemFont, sans-serif',
+            'poppins': '"Poppins", -apple-system, BlinkMacSystemFont, sans-serif'
+        };
+        
+        const fontFamily = fontFamilies[this.settings.fontFamily] || fontFamilies.system;
         root.style.setProperty('--font-family', fontFamily);
         
         // Apply theme class
         document.body.className = `theme-${this.settings.theme}`;
         
+        // Update CSS custom properties for better theme integration
+        this.updateThemeColors();
+        
         // Set language
         this.desktop.languageManager.setLanguage(this.settings.language);
+    }
+    
+    updateThemeColors() {
+        const root = document.documentElement;
+        const backgroundColor = this.settings.backgroundColor;
+        const primaryColor = this.settings.themeColor;
+        
+        // Determine if background is light or dark
+        const bgLightness = this.getLightness(backgroundColor);
+        const isLightBackground = bgLightness > 50;
+        
+        // Set appropriate text colors based on background
+        if (isLightBackground) {
+            root.style.setProperty('--text-primary', '#000000');
+            root.style.setProperty('--text-secondary', '#6D6D70');
+            root.style.setProperty('--surface-color', '#FFFFFF');
+            root.style.setProperty('--border-color', '#C6C6C8');
+            root.style.setProperty('--shadow', '0 2px 10px rgba(0, 0, 0, 0.1)');
+        } else {
+            root.style.setProperty('--text-primary', '#FFFFFF');
+            root.style.setProperty('--text-secondary', '#8E8E93');
+            root.style.setProperty('--surface-color', '#1C1C1E');
+            root.style.setProperty('--border-color', '#38383A');
+            root.style.setProperty('--shadow', '0 2px 10px rgba(0, 0, 0, 0.5)');
+        }
+    }
+    
+    hexToHsl(hex) {
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+            h = s = 0;
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        
+        return { h: h * 360, s: s * 100, l: l * 100 };
+    }
+    
+    hslToHex(h, s, l) {
+        h /= 360;
+        s /= 100;
+        l /= 100;
+        
+        const c = (1 - Math.abs(2 * l - 1)) * s;
+        const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+        const m = l - c / 2;
+        let r = 0, g = 0, b = 0;
+        
+        if (0 <= h && h < 1/6) {
+            r = c; g = x; b = 0;
+        } else if (1/6 <= h && h < 1/3) {
+            r = x; g = c; b = 0;
+        } else if (1/3 <= h && h < 1/2) {
+            r = 0; g = c; b = x;
+        } else if (1/2 <= h && h < 2/3) {
+            r = 0; g = x; b = c;
+        } else if (2/3 <= h && h < 5/6) {
+            r = x; g = 0; b = c;
+        } else if (5/6 <= h && h < 1) {
+            r = c; g = 0; b = x;
+        }
+        
+        r = Math.round((r + m) * 255);
+        g = Math.round((g + m) * 255);
+        b = Math.round((b + m) * 255);
+        
+        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+    }
+    
+    getLightness(hex) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return (r * 299 + g * 587 + b * 114) / 1000 / 255 * 100;
     }
     
     loadSettingsToForm() {
@@ -105,7 +216,7 @@ export class SettingsManager {
                 console.log('Settings imported successfully');
             } catch (error) {
                 console.error('Error importing settings:', error);
-                alert('Ayarlar dosyası geçersiz!');
+                alert(this.desktop.languageManager.get('invalid_settings_file') || 'Ayarlar dosyası geçersiz!');
             }
         };
         reader.readAsText(file);

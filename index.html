@@ -3,10 +3,16 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>AI Desktop Environment</title>
     <meta name="description" content="AI Destekli Masaüstü Ortamı" />
     <link rel="icon" href="/resim/favicon.png" type="image/png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/themes.css">
@@ -19,19 +25,19 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 5v14M5 12h14"/>
                 </svg>
-                <span>Ekle</span>
+                <span data-tr="add_app">Ekle</span>
             </button>
             <button id="settingsBtn" class="header-btn" data-tooltip="Ayarlar">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"/>
                     <path d="m12 1 2.12 2.12L17 2l1 1-1.12 2.88L19 8l-1 1-2.88-1.12L13 11l-1-1 1.12-2.88L11 6l1-1 2.88 1.12L17 4l-1-1-2.88 1.12z"/>
                 </svg>
-                <span>Ayarlar</span>
+                <span data-tr="settings">Ayarlar</span>
             </button>
         </div>
         <div class="header-center">
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Uygulama ara..." autocomplete="off">
+                <input type="text" id="searchInput" placeholder="Uygulama ara..." autocomplete="off" data-tr="search_placeholder">
                 <div id="searchResults" class="search-results"></div>
             </div>
         </div>
@@ -72,6 +78,14 @@
                             <option value="📊">📊 Grafik</option>
                             <option value="🎮">🎮 Oyun</option>
                             <option value="⚙️">⚙️ Araç</option>
+                            <option value="🌐">🌐 Web</option>
+                            <option value="📧">📧 E-posta</option>
+                            <option value="📷">📷 Kamera</option>
+                            <option value="🎵">🎵 Müzik</option>
+                            <option value="🎬">🎬 Video</option>
+                            <option value="📁">📁 Dosya</option>
+                            <option value="💬">💬 Sohbet</option>
+                            <option value="🔐">🔐 Güvenlik</option>
                         </select>
                     </div>
                     <div class="form-actions">
@@ -127,10 +141,16 @@
                         <label data-tr="font_family">Yazı Tipi:</label>
                         <select id="fontFamily">
                             <option value="system">Sistem Varsayılanı</option>
-                            <option value="Arial">Arial</option>
-                            <option value="Helvetica">Helvetica</option>
-                            <option value="Times New Roman">Times New Roman</option>
-                            <option value="Georgia">Georgia</option>
+                            <option value="inter">Inter</option>
+                            <option value="roboto">Roboto</option>
+                            <option value="open-sans">Open Sans</option>
+                            <option value="lato">Lato</option>
+                            <option value="montserrat">Montserrat</option>
+                            <option value="poppins">Poppins</option>
+                            <option value="arial">Arial</option>
+                            <option value="helvetica">Helvetica</option>
+                            <option value="times">Times New Roman</option>
+                            <option value="georgia">Georgia</option>
                         </select>
                     </div>
                     <div class="form-group">

@@ -4,6 +4,17 @@ export class WindowManager {
         this.windows = [];
         this.activeWindow = null;
         this.zIndexCounter = 1600;
+        this.loadWindowStates();
+    }
+    
+    loadWindowStates() {
+        const savedStates = localStorage.getItem('window_states');
+        this.windowStates = savedStates ? JSON.parse(savedStates) : {};
+    }
+    
+    saveWindowState(appId, state) {
+        this.windowStates[appId] = state;
+        localStorage.setItem('window_states', JSON.stringify(this.windowStates));
     }
     
     openAppWindow(app) {
@@ -14,17 +25,32 @@ export class WindowManager {
             return;
         }
         
+        // Get saved state or use defaults
+        const savedState = this.windowStates[app.id] || {
+            position: { x: 100 + this.windows.length * 30, y: 100 + this.windows.length * 30 },
+            size: { width: 600, height: 400 },
+            minimized: false,
+            maximized: false
+        };
+        
         // Create window element
         const windowElement = this.createWindowElement(app);
         document.body.appendChild(windowElement);
+        
+        // Apply saved state
+        windowElement.style.left = `${savedState.position.x}px`;
+        windowElement.style.top = `${savedState.position.y}px`;
+        windowElement.style.width = `${savedState.size.width}px`;
+        windowElement.style.height = `${savedState.size.height}px`;
         
         // Add to windows array
         const windowData = {
             appId: app.id,
             element: windowElement,
-            position: { x: 100 + this.windows.length * 30, y: 100 + this.windows.length * 30 },
-            size: { width: 600, height: 400 },
-            minimized: false
+            position: savedState.position,
+            size: savedState.size,
+            minimized: savedState.minimized,
+            maximized: savedState.maximized
         };
         
         this.windows.push(windowData);
@@ -50,10 +76,6 @@ export class WindowManager {
         
         windowElement.id = `window_${app.id}`;
         windowElement.style.display = 'block';
-        windowElement.style.left = '100px';
-        windowElement.style.top = '100px';
-        windowElement.style.width = '600px';
-        windowElement.style.height = '400px';
         windowElement.style.zIndex = ++this.zIndexCounter;
         
         // Set window title
@@ -68,7 +90,7 @@ export class WindowManager {
         const minimizeBtn = windowElement.querySelector('.window-btn.minimize');
         const closeBtn = windowElement.querySelector('.window-btn.close');
         
-        // Window dragging
+        // Window dragging with smoother movement
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
         
@@ -81,6 +103,7 @@ export class WindowManager {
             };
             
             this.focusWindow(windowElement);
+            windowElement.style.transition = 'none';
             
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
@@ -89,21 +112,28 @@ export class WindowManager {
         const handleMouseMove = (e) => {
             if (!isDragging) return;
             
-            const x = e.clientX - dragOffset.x;
-            const y = e.clientY - dragOffset.y;
-            
-            // Keep window within screen bounds
-            const maxX = window.innerWidth - windowElement.offsetWidth;
-            const maxY = window.innerHeight - windowElement.offsetHeight;
-            
-            windowElement.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
-            windowElement.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
-            
-            windowData.position = { x, y };
+            requestAnimationFrame(() => {
+                const x = e.clientX - dragOffset.x;
+                const y = e.clientY - dragOffset.y;
+                
+                // Keep window within screen bounds
+                const maxX = window.innerWidth - windowElement.offsetWidth;
+                const maxY = window.innerHeight - windowElement.offsetHeight;
+                
+                const newX = Math.max(0, Math.min(x, maxX));
+                const newY = Math.max(0, Math.min(y, maxY));
+                
+                windowElement.style.left = `${newX}px`;
+                windowElement.style.top = `${newY}px`;
+                
+                windowData.position = { x: newX, y: newY };
+            });
         };
         
         const handleMouseUp = () => {
             isDragging = false;
+            windowElement.style.transition = 'var(--transition)';
+            this.saveWindowState(windowData.appId, windowData);
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
@@ -127,6 +157,18 @@ export class WindowManager {
         header.addEventListener('dblclick', () => {
             this.toggleMaximize(windowElement, windowData);
         });
+        
+        // Save state on resize (if resize handles are added later)
+        const resizeObserver = new ResizeObserver(() => {
+            if (!windowData.maximized) {
+                windowData.size = {
+                    width: windowElement.offsetWidth,
+                    height: windowElement.offsetHeight
+                };
+                this.saveWindowState(windowData.appId, windowData);
+            }
+        });
+        resizeObserver.observe(windowElement);
     }
     
     loadAppContent(windowElement, app) {
@@ -204,9 +246,13 @@ export class WindowManager {
             windowElement.style.display = 'none';
             windowData.minimized = true;
         }
+        this.saveWindowState(windowData.appId, windowData);
     }
     
     closeWindow(windowElement, windowData) {
+        // Save final state
+        this.saveWindowState(windowData.appId, windowData);
+        
         // Remove from windows array
         this.windows = this.windows.filter(w => w !== windowData);
         
@@ -252,11 +298,12 @@ export class WindowManager {
             
             // Maximize window
             windowElement.style.left = '0px';
-            windowElement.style.top = '60px'; // Account for header
+            windowElement.style.top = '60px';
             windowElement.style.width = '100vw';
             windowElement.style.height = 'calc(100vh - 60px)';
             windowData.maximized = true;
         }
+        this.saveWindowState(windowData.appId, windowData);
     }
     
     getOpenWindows() {
@@ -273,6 +320,7 @@ export class WindowManager {
             windowData.element.style.left = `${100 + offset}px`;
             windowData.element.style.top = `${100 + offset}px`;
             windowData.position = { x: 100 + offset, y: 100 + offset };
+            this.saveWindowState(windowData.appId, windowData);
         });
     }
     
@@ -284,14 +332,14 @@ export class WindowManager {
         const rows = Math.ceil(visibleWindows.length / cols);
         
         const windowWidth = window.innerWidth / cols;
-        const windowHeight = (window.innerHeight - 60) / rows; // Account for header
+        const windowHeight = (window.innerHeight - 60) / rows;
         
         visibleWindows.forEach((windowData, index) => {
             const col = index % cols;
             const row = Math.floor(index / cols);
             
             const x = col * windowWidth;
-            const y = 60 + row * windowHeight; // Account for header
+            const y = 60 + row * windowHeight;
             
             windowData.element.style.left = `${x}px`;
             windowData.element.style.top = `${y}px`;
@@ -301,6 +349,8 @@ export class WindowManager {
             windowData.position = { x, y };
             windowData.size = { width: windowWidth, height: windowHeight };
             windowData.maximized = false;
+            
+            this.saveWindowState(windowData.appId, windowData);
         });
     }
 }
