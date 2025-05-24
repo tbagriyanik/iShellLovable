@@ -78,21 +78,23 @@ export class WindowManager {
         windowElement.style.display = 'block';
         windowElement.style.zIndex = ++this.zIndexCounter;
         
-        // Set window title
-        const titleElement = windowElement.querySelector('.window-title');
-        titleElement.textContent = app.name;
+        // Set window title with icon
+        const iconElement = windowElement.querySelector('.window-icon');
+        const nameElement = windowElement.querySelector('.window-name');
+        iconElement.textContent = app.icon;
+        nameElement.textContent = app.name;
         
         return windowElement;
     }
     
     setupWindowEvents(windowElement, windowData) {
         const header = windowElement.querySelector('.window-header');
-        const minimizeBtn = windowElement.querySelector('.window-btn.minimize');
         const closeBtn = windowElement.querySelector('.window-btn.close');
         
-        // Window dragging with smoother movement
+        // Window dragging with improved performance
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
+        let lastMoveTime = 0;
         
         header.addEventListener('mousedown', (e) => {
             isDragging = true;
@@ -111,6 +113,10 @@ export class WindowManager {
         
         const handleMouseMove = (e) => {
             if (!isDragging) return;
+            
+            const now = Date.now();
+            if (now - lastMoveTime < 16) return; // Throttle to 60fps
+            lastMoveTime = now;
             
             requestAnimationFrame(() => {
                 const x = e.clientX - dragOffset.x;
@@ -143,11 +149,6 @@ export class WindowManager {
             this.focusWindow(windowElement);
         });
         
-        // Minimize button
-        minimizeBtn.addEventListener('click', () => {
-            this.minimizeWindow(windowElement, windowData);
-        });
-        
         // Close button
         closeBtn.addEventListener('click', () => {
             this.closeWindow(windowElement, windowData);
@@ -158,7 +159,7 @@ export class WindowManager {
             this.toggleMaximize(windowElement, windowData);
         });
         
-        // Save state on resize (if resize handles are added later)
+        // Save state on resize
         const resizeObserver = new ResizeObserver(() => {
             if (!windowData.maximized) {
                 windowData.size = {
@@ -179,6 +180,11 @@ export class WindowManager {
             const blob = new Blob([app.content], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             iframe.src = url;
+            
+            // Special handling for welcome app - make it fullscreen background
+            if (app.id === 'welcome') {
+                iframe.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            }
         } else {
             // Show loading message
             iframe.srcdoc = `
@@ -192,7 +198,7 @@ export class WindowManager {
                             justify-content: center;
                             height: 100vh;
                             margin: 0;
-                            background: #f5f5f5;
+                            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
                         }
                         .loading {
                             text-align: center;

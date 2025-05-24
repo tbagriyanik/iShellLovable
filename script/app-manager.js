@@ -6,6 +6,9 @@ export class AppManager {
         this.gridSize = 20;
         this.iconSize = 100;
         this.iconMargin = 20;
+        this.dragThreshold = 5;
+        this.isDragging = false;
+        this.dragStartPos = { x: 0, y: 0 };
     }
     
     createDesktopIcon(app) {
@@ -15,7 +18,7 @@ export class AppManager {
         icon.style.left = `${app.position.x}px`;
         icon.style.top = `${app.position.y}px`;
         
-        // Enhanced colorful icons
+        // Enhanced colorful icons with gradients
         const colorfulIcons = {
             '📱': { icon: '📱', bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
             '🧮': { icon: '🧮', bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
@@ -24,7 +27,20 @@ export class AppManager {
             '📊': { icon: '📊', bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
             '🎮': { icon: '🎮', bg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' },
             '⚙️': { icon: '⚙️', bg: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' },
-            '👋': { icon: '👋', bg: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' }
+            '👋': { icon: '👋', bg: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
+            '🌐': { icon: '🌐', bg: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)' },
+            '📧': { icon: '📧', bg: 'linear-gradient(135deg, #fd79a8 0%, #e84393 100%)' },
+            '📷': { icon: '📷', bg: 'linear-gradient(135deg, #fdcb6e 0%, #e17055 100%)' },
+            '🎵': { icon: '🎵', bg: 'linear-gradient(135deg, #e17055 0%, #d63031 100%)' },
+            '🎬': { icon: '🎬', bg: 'linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)' },
+            '📁': { icon: '📁', bg: 'linear-gradient(135deg, #00b894 0%, #55a3ff 100%)' },
+            '💬': { icon: '💬', bg: 'linear-gradient(135deg, #00cec9 0%, #55efc4 100%)' },
+            '🔐': { icon: '🔐', bg: 'linear-gradient(135deg, #2d3436 0%, #636e72 100%)' },
+            '💰': { icon: '💰', bg: 'linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%)' },
+            '📰': { icon: '📰', bg: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)' },
+            '🏪': { icon: '🏪', bg: 'linear-gradient(135deg, #fd79a8 0%, #e84393 100%)' },
+            '🎯': { icon: '🎯', bg: 'linear-gradient(135deg, #e17055 0%, #d63031 100%)' },
+            '📈': { icon: '📈', bg: 'linear-gradient(135deg, #00b894 0%, #55efc4 100%)' }
         };
         
         const iconStyle = colorfulIcons[app.icon] || { icon: app.icon, bg: 'var(--surface-color)' };
@@ -44,9 +60,15 @@ export class AppManager {
     }
     
     setupIconEvents(icon, app) {
-        // Double click to open app
-        icon.addEventListener('dblclick', () => {
-            this.desktop.openApp(app.id);
+        let clickTimeout;
+        let touchStartTime = 0;
+        
+        // Single click to open app
+        icon.addEventListener('click', (e) => {
+            if (!this.isDragging) {
+                e.preventDefault();
+                this.desktop.openApp(app.id);
+            }
         });
         
         // Right click for context menu
@@ -55,33 +77,48 @@ export class AppManager {
             this.desktop.contextMenuManager.showMenu(e.clientX, e.clientY, app.id);
         });
         
-        // Improved drag and drop
+        // Touch events for mobile
+        icon.addEventListener('touchstart', (e) => {
+            touchStartTime = Date.now();
+            this.startDrag(icon, e.touches[0]);
+        });
+        
+        icon.addEventListener('touchend', (e) => {
+            const touchDuration = Date.now() - touchStartTime;
+            if (touchDuration > 500 && !this.isDragging) {
+                // Long press - show context menu
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                this.desktop.contextMenuManager.showMenu(touch.clientX, touch.clientY, app.id);
+            } else if (!this.isDragging && touchDuration < 300) {
+                // Short tap - open app
+                this.desktop.openApp(app.id);
+            }
+        });
+        
+        // Mouse drag
         icon.addEventListener('mousedown', (e) => {
             if (e.button === 0) {
                 this.startDrag(icon, e);
             }
         });
-        
-        // Touch events for mobile
-        icon.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.startDrag(icon, e.touches[0]);
-        });
     }
     
     startDrag(element, event) {
         this.draggedElement = element;
+        this.isDragging = false;
         const rect = element.getBoundingClientRect();
         const canvasRect = document.getElementById('desktopCanvas').getBoundingClientRect();
+        
+        this.dragStartPos = {
+            x: event.clientX,
+            y: event.clientY
+        };
         
         this.dragOffset = {
             x: event.clientX - rect.left,
             y: event.clientY - rect.top
         };
-        
-        element.classList.add('dragging');
-        element.style.transition = 'none';
-        element.style.zIndex = '9999';
         
         // Mouse events
         document.addEventListener('mousemove', this.handleDrag.bind(this));
@@ -97,18 +134,44 @@ export class AppManager {
     
     handleDrag(e) {
         if (!this.draggedElement) return;
-        requestAnimationFrame(() => {
-            this.updateElementPosition(e.clientX, e.clientY);
-        });
+        
+        const deltaX = Math.abs(e.clientX - this.dragStartPos.x);
+        const deltaY = Math.abs(e.clientY - this.dragStartPos.y);
+        
+        if (!this.isDragging && (deltaX > this.dragThreshold || deltaY > this.dragThreshold)) {
+            this.isDragging = true;
+            this.draggedElement.classList.add('dragging');
+            this.draggedElement.style.transition = 'none';
+            this.draggedElement.style.zIndex = '9999';
+        }
+        
+        if (this.isDragging) {
+            requestAnimationFrame(() => {
+                this.updateElementPosition(e.clientX, e.clientY);
+            });
+        }
     }
     
     handleTouchDrag(e) {
         if (!this.draggedElement) return;
         e.preventDefault();
         const touch = e.touches[0];
-        requestAnimationFrame(() => {
-            this.updateElementPosition(touch.clientX, touch.clientY);
-        });
+        
+        const deltaX = Math.abs(touch.clientX - this.dragStartPos.x);
+        const deltaY = Math.abs(touch.clientY - this.dragStartPos.y);
+        
+        if (!this.isDragging && (deltaX > this.dragThreshold || deltaY > this.dragThreshold)) {
+            this.isDragging = true;
+            this.draggedElement.classList.add('dragging');
+            this.draggedElement.style.transition = 'none';
+            this.draggedElement.style.zIndex = '9999';
+        }
+        
+        if (this.isDragging) {
+            requestAnimationFrame(() => {
+                this.updateElementPosition(touch.clientX, touch.clientY);
+            });
+        }
     }
     
     updateElementPosition(clientX, clientY) {
@@ -152,16 +215,15 @@ export class AppManager {
             return { x: targetX, y: targetY };
         }
         
-        // Find nearest non-overlapping position
+        // Find nearest non-overlapping position using spiral search
         const spiralSearch = (centerX, centerY, step = this.gridSize) => {
             let x = centerX;
             let y = centerY;
-            let direction = 0; // 0: right, 1: down, 2: left, 3: up
+            let direction = 0;
             let steps = 1;
             let stepCount = 0;
             
-            for (let i = 0; i < 100; i++) { // Limit search iterations
-                // Check current position
+            for (let i = 0; i < 100; i++) {
                 const overlapping = this.desktop.apps.some(app => {
                     if (app.id === currentAppId) return false;
                     const dx = Math.abs(app.position.x - x);
@@ -176,12 +238,11 @@ export class AppManager {
                     }
                 }
                 
-                // Move in spiral pattern
                 switch (direction) {
-                    case 0: x += step; break; // right
-                    case 1: y += step; break; // down
-                    case 2: x -= step; break; // left
-                    case 3: y -= step; break; // up
+                    case 0: x += step; break;
+                    case 1: y += step; break;
+                    case 2: x -= step; break;
+                    case 3: y -= step; break;
                 }
                 
                 stepCount++;
@@ -192,7 +253,7 @@ export class AppManager {
                 }
             }
             
-            return { x: targetX, y: targetY }; // Fallback to original position
+            return { x: targetX, y: targetY };
         };
         
         return spiralSearch(targetX, targetY);
@@ -201,22 +262,25 @@ export class AppManager {
     stopDrag() {
         if (!this.draggedElement) return;
         
-        // Update app position in data
-        const appId = this.draggedElement.dataset.appId;
-        const app = this.desktop.apps.find(a => a.id === appId);
-        
-        if (app) {
-            app.position = {
-                x: parseInt(this.draggedElement.style.left),
-                y: parseInt(this.draggedElement.style.top)
-            };
-            this.desktop.saveApps();
+        // Update app position in data only if actually dragged
+        if (this.isDragging) {
+            const appId = this.draggedElement.dataset.appId;
+            const app = this.desktop.apps.find(a => a.id === appId);
+            
+            if (app) {
+                app.position = {
+                    x: parseInt(this.draggedElement.style.left),
+                    y: parseInt(this.draggedElement.style.top)
+                };
+                this.desktop.saveApps();
+            }
         }
         
         this.draggedElement.classList.remove('dragging');
         this.draggedElement.style.transition = 'var(--transition)';
         this.draggedElement.style.zIndex = '';
         this.draggedElement = null;
+        this.isDragging = false;
         
         // Remove event listeners
         document.removeEventListener('mousemove', this.handleDrag.bind(this));
@@ -239,7 +303,6 @@ export class AppManager {
             }
         }
         
-        // If no position found, place randomly with overlap check
         return this.findRandomAvailablePosition();
     }
     
@@ -256,7 +319,6 @@ export class AppManager {
             }
         }
         
-        // Last resort: place at top-left area
         return { x: this.iconMargin, y: this.iconMargin };
     }
     

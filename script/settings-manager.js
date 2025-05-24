@@ -1,4 +1,3 @@
-
 export class SettingsManager {
     constructor(desktop) {
         this.desktop = desktop;
@@ -8,7 +7,10 @@ export class SettingsManager {
             fontFamily: 'system',
             iconSize: 80,
             language: 'tr',
-            theme: 'light'
+            theme: 'light',
+            timeFormat: '24',
+            showSeconds: 'false',
+            showDate: 'false'
         };
         this.settings = { ...this.defaultSettings };
     }
@@ -28,6 +30,9 @@ export class SettingsManager {
         const fontFamily = document.getElementById('fontFamily').value;
         const iconSize = document.getElementById('iconSize').value;
         const language = document.getElementById('languageSelect').value;
+        const timeFormat = document.getElementById('timeFormat').value;
+        const showSeconds = document.getElementById('showSeconds').value;
+        const showDate = document.getElementById('showDate').value;
         
         this.settings = {
             ...this.settings,
@@ -35,7 +40,10 @@ export class SettingsManager {
             backgroundColor,
             fontFamily,
             iconSize: parseInt(iconSize),
-            language
+            language,
+            timeFormat,
+            showSeconds,
+            showDate
         };
         
         localStorage.setItem('desktop_settings', JSON.stringify(this.settings));
@@ -47,7 +55,7 @@ export class SettingsManager {
     applySettings() {
         const root = document.documentElement;
         
-        // Apply theme colors with better contrast calculation
+        // Apply theme colors
         root.style.setProperty('--primary-color', this.settings.themeColor);
         root.style.setProperty('--background-color', this.settings.backgroundColor);
         root.style.setProperty('--icon-size', `${this.settings.iconSize}px`);
@@ -63,16 +71,18 @@ export class SettingsManager {
         // Apply font family with better fallbacks
         const fontFamilies = {
             'system': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            'arial': '"Arial", "Helvetica Neue", Helvetica, sans-serif',
-            'helvetica': '"Helvetica Neue", Helvetica, Arial, sans-serif',
-            'times': '"Times New Roman", Times, serif',
-            'georgia': 'Georgia, "Times New Roman", serif',
             'inter': '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
             'roboto': '"Roboto", -apple-system, BlinkMacSystemFont, sans-serif',
             'open-sans': '"Open Sans", -apple-system, BlinkMacSystemFont, sans-serif',
             'lato': '"Lato", -apple-system, BlinkMacSystemFont, sans-serif',
             'montserrat': '"Montserrat", -apple-system, BlinkMacSystemFont, sans-serif',
-            'poppins': '"Poppins", -apple-system, BlinkMacSystemFont, sans-serif'
+            'poppins': '"Poppins", -apple-system, BlinkMacSystemFont, sans-serif',
+            'jetbrains-mono': '"JetBrains Mono", "Fira Code", "Consolas", monospace',
+            'fira-code': '"Fira Code", "JetBrains Mono", "Consolas", monospace',
+            'arial': '"Arial", "Helvetica Neue", Helvetica, sans-serif',
+            'helvetica': '"Helvetica Neue", Helvetica, Arial, sans-serif',
+            'times': '"Times New Roman", Times, serif',
+            'georgia': 'Georgia, "Times New Roman", serif'
         };
         
         const fontFamily = fontFamilies[this.settings.fontFamily] || fontFamilies.system;
@@ -183,6 +193,9 @@ export class SettingsManager {
         document.getElementById('iconSize').value = this.settings.iconSize;
         document.getElementById('iconSizeValue').textContent = `${this.settings.iconSize}px`;
         document.getElementById('languageSelect').value = this.settings.language;
+        document.getElementById('timeFormat').value = this.settings.timeFormat;
+        document.getElementById('showSeconds').value = this.settings.showSeconds;
+        document.getElementById('showDate').value = this.settings.showDate;
     }
     
     resetSettings() {
@@ -204,19 +217,57 @@ export class SettingsManager {
         linkElement.click();
     }
     
+    exportApps() {
+        const dataStr = JSON.stringify(this.desktop.apps, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = 'desktop-apps.json';
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    }
+    
     importSettings(file) {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const importedSettings = JSON.parse(e.target.result);
-                this.settings = { ...this.defaultSettings, ...importedSettings };
-                localStorage.setItem('desktop_settings', JSON.stringify(this.settings));
-                this.applySettings();
-                this.loadSettingsToForm();
-                console.log('Settings imported successfully');
+                const importedData = JSON.parse(e.target.result);
+                
+                // Check if it's settings or apps data
+                if (importedData.themeColor !== undefined) {
+                    // It's settings data
+                    this.settings = { ...this.defaultSettings, ...importedData };
+                    localStorage.setItem('desktop_settings', JSON.stringify(this.settings));
+                    this.applySettings();
+                    this.loadSettingsToForm();
+                    console.log('Settings imported successfully');
+                } else if (Array.isArray(importedData)) {
+                    // It's apps data
+                    this.desktop.apps = importedData;
+                    this.desktop.saveApps();
+                    
+                    // Reload the desktop
+                    document.getElementById('desktopCanvas').innerHTML = '';
+                    this.desktop.apps.forEach(app => {
+                        this.desktop.appManager.createDesktopIcon(app);
+                    });
+                    console.log('Apps imported successfully');
+                }
+                
+                const lang = this.desktop.languageManager.getCurrentLanguage();
+                const message = lang === 'tr' 
+                    ? 'Veri başarıyla içe aktarıldı!'
+                    : 'Data imported successfully!';
+                alert(message);
             } catch (error) {
-                console.error('Error importing settings:', error);
-                alert(this.desktop.languageManager.get('invalid_settings_file') || 'Ayarlar dosyası geçersiz!');
+                console.error('Error importing data:', error);
+                const lang = this.desktop.languageManager.getCurrentLanguage();
+                const message = lang === 'tr' 
+                    ? 'Veri dosyası geçersiz!'
+                    : 'Invalid data file!';
+                alert(message);
             }
         };
         reader.readAsText(file);

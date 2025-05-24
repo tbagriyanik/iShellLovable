@@ -11,7 +11,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
@@ -21,18 +21,26 @@
     <!-- Header Bar -->
     <header class="header-bar">
         <div class="header-left">
-            <button id="addBtn" class="header-btn" data-tooltip="Uygulama Ekle">
+            <button id="addBtn" class="header-btn" data-tooltip="Uygulama Ekle (Ctrl+N)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 5v14M5 12h14"/>
                 </svg>
                 <span data-tr="add_app">Ekle</span>
             </button>
-            <button id="settingsBtn" class="header-btn" data-tooltip="Ayarlar">
+            <button id="settingsBtn" class="header-btn" data-tooltip="Ayarlar (Ctrl+,)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"/>
                     <path d="m12 1 2.12 2.12L17 2l1 1-1.12 2.88L19 8l-1 1-2.88-1.12L13 11l-1-1 1.12-2.88L11 6l1-1 2.88 1.12L17 4l-1-1-2.88 1.12z"/>
                 </svg>
                 <span data-tr="settings">Ayarlar</span>
+            </button>
+            <button id="exportBtn" class="header-btn" data-tooltip="Kodu İndir">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7,10 12,15 17,10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span data-tr="export">İndir</span>
             </button>
         </div>
         <div class="header-center">
@@ -67,6 +75,9 @@
                     <div class="form-group">
                         <label for="appPrompt" data-tr="ai_prompt">AI Prompt (Uygulama Açıklaması):</label>
                         <textarea id="appPrompt" rows="4" placeholder="Örn: Basit bir hesap makinesi uygulaması yap" required></textarea>
+                        <small style="color: var(--text-secondary); margin-top: 5px; display: block;">
+                            Örnekler: Döviz kurları gösterici, Word benzeri metin editörü, Web tarayıcısı, Resim galerisi, Video oynatıcı, YouTube video gösterici, Haber sitesi
+                        </small>
                     </div>
                     <div class="form-group">
                         <label for="appIcon" data-tr="app_icon">Uygulama Simgesi:</label>
@@ -86,6 +97,11 @@
                             <option value="📁">📁 Dosya</option>
                             <option value="💬">💬 Sohbet</option>
                             <option value="🔐">🔐 Güvenlik</option>
+                            <option value="💰">💰 Finans</option>
+                            <option value="📰">📰 Haber</option>
+                            <option value="🏪">🏪 Alışveriş</option>
+                            <option value="🎯">🎯 Hedef</option>
+                            <option value="📈">📈 Borsa</option>
                         </select>
                     </div>
                     <div class="form-actions">
@@ -109,6 +125,8 @@
                     <button class="tab-btn active" data-tab="theme" data-tr="theme">Tema</button>
                     <button class="tab-btn" data-tab="language" data-tr="language">Dil</button>
                     <button class="tab-btn" data-tab="display" data-tr="display">Görünüm</button>
+                    <button class="tab-btn" data-tab="time" data-tr="time">Saat</button>
+                    <button class="tab-btn" data-tab="data" data-tr="data">Veri</button>
                 </div>
                 
                 <div class="tab-content active" id="themeTab">
@@ -147,6 +165,8 @@
                             <option value="lato">Lato</option>
                             <option value="montserrat">Montserrat</option>
                             <option value="poppins">Poppins</option>
+                            <option value="jetbrains-mono">JetBrains Mono</option>
+                            <option value="fira-code">Fira Code</option>
                             <option value="arial">Arial</option>
                             <option value="helvetica">Helvetica</option>
                             <option value="times">Times New Roman</option>
@@ -157,6 +177,45 @@
                         <label data-tr="icon_size">Simge Boyutu:</label>
                         <input type="range" id="iconSize" min="60" max="120" value="80">
                         <span id="iconSizeValue">80px</span>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="timeTab">
+                    <div class="time-settings">
+                        <div class="form-group">
+                            <label data-tr="time_format">Saat Formatı:</label>
+                            <select id="timeFormat">
+                                <option value="24">24 Saat</option>
+                                <option value="12">12 Saat</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label data-tr="show_seconds">Saniye Göster:</label>
+                            <select id="showSeconds">
+                                <option value="false">Hayır</option>
+                                <option value="true">Evet</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label data-tr="show_date">Tarih Göster:</label>
+                            <select id="showDate">
+                                <option value="false">Hayır</option>
+                                <option value="true">Evet</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="dataTab">
+                    <div class="export-import-section">
+                        <h3 data-tr="backup_restore">Yedekleme ve Geri Yükleme</h3>
+                        <div class="export-import-actions">
+                            <button type="button" class="btn-secondary" id="exportSettings" data-tr="export_settings">Ayarları Dışa Aktar</button>
+                            <button type="button" class="btn-secondary" id="exportApps" data-tr="export_apps">Uygulamaları Dışa Aktar</button>
+                            <button type="button" class="btn-secondary" id="importData" data-tr="import_data">Veri İçe Aktar</button>
+                            <input type="file" id="importFile" class="file-input" accept=".json">
+                            <button type="button" class="btn-secondary" id="resetAll" data-tr="reset_all">Tümünü Sıfırla</button>
+                        </div>
                     </div>
                 </div>
                 
@@ -170,16 +229,28 @@
 
     <!-- Context Menu -->
     <div id="contextMenu" class="context-menu">
-        <div class="context-item" id="editApp" data-tr="edit">Düzenle</div>
-        <div class="context-item" id="deleteApp" data-tr="delete">Sil</div>
+        <div class="context-item" id="openApp" data-tr="open">
+            <span>📂</span>
+            <span data-tr="open">Aç</span>
+        </div>
+        <div class="context-item" id="editApp" data-tr="edit">
+            <span>✏️</span>
+            <span data-tr="edit">Düzenle</span>
+        </div>
+        <div class="context-item" id="deleteApp" data-tr="delete">
+            <span>🗑️</span>
+            <span data-tr="delete">Sil</span>
+        </div>
     </div>
 
     <!-- App Window Template -->
     <div id="appWindowTemplate" class="app-window" style="display: none;">
         <div class="window-header">
-            <div class="window-title"></div>
+            <div class="window-title">
+                <span class="window-icon"></span>
+                <span class="window-name"></span>
+            </div>
             <div class="window-controls">
-                <button class="window-btn minimize">−</button>
                 <button class="window-btn close">×</button>
             </div>
         </div>
@@ -190,8 +261,10 @@
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <p data-tr="generating_app">Uygulama oluşturuluyor...</p>
+        <div style="text-align: center;">
+            <div class="loading-spinner"></div>
+            <p data-tr="generating_app">Uygulama oluşturuluyor...</p>
+        </div>
     </div>
 
     <!-- Scripts -->
