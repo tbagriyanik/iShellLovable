@@ -9,6 +9,7 @@ export class AppManager {
         this.dragThreshold = 5;
         this.isDragging = false;
         this.dragStartPos = { x: 0, y: 0 };
+        this.selectedIcon = null;
     }
     
     createDesktopIcon(app) {
@@ -59,14 +60,36 @@ export class AppManager {
         return icon;
     }
     
+    selectIcon(icon) {
+        // Clear previous selection
+        if (this.selectedIcon) {
+            this.selectedIcon.classList.remove('selected');
+        }
+        
+        // Set new selection
+        this.selectedIcon = icon;
+        if (icon) {
+            icon.classList.add('selected');
+        }
+    }
+    
+    clearSelection() {
+        if (this.selectedIcon) {
+            this.selectedIcon.classList.remove('selected');
+            this.selectedIcon = null;
+        }
+    }
+    
     setupIconEvents(icon, app) {
         let clickTimeout;
         let touchStartTime = 0;
         
-        // Single click to open app
+        // Single click to select and open app
         icon.addEventListener('click', (e) => {
             if (!this.isDragging) {
                 e.preventDefault();
+                e.stopPropagation();
+                this.selectIcon(icon);
                 this.desktop.openApp(app.id);
             }
         });
@@ -74,6 +97,7 @@ export class AppManager {
         // Right click for context menu
         icon.addEventListener('contextmenu', (e) => {
             e.preventDefault();
+            this.selectIcon(icon);
             this.desktop.contextMenuManager.showMenu(e.clientX, e.clientY, app.id);
         });
         
@@ -89,9 +113,11 @@ export class AppManager {
                 // Long press - show context menu
                 e.preventDefault();
                 const touch = e.changedTouches[0];
+                this.selectIcon(icon);
                 this.desktop.contextMenuManager.showMenu(touch.clientX, touch.clientY, app.id);
             } else if (!this.isDragging && touchDuration < 300) {
-                // Short tap - open app
+                // Short tap - select and open app
+                this.selectIcon(icon);
                 this.desktop.openApp(app.id);
             }
         });
@@ -99,6 +125,7 @@ export class AppManager {
         // Mouse drag
         icon.addEventListener('mousedown', (e) => {
             if (e.button === 0) {
+                this.selectIcon(icon);
                 this.startDrag(icon, e);
             }
         });

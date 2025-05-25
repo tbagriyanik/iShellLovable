@@ -1,4 +1,3 @@
-
 /* CSS Custom Properties for Theming */
 :root {
     --primary-color: #007AFF;
@@ -204,6 +203,17 @@ body {
     transition: none;
 }
 
+.desktop-icon.selected .icon-image {
+    box-shadow: 0 0 20px rgba(0, 122, 255, 0.8), 0 0 40px rgba(0, 122, 255, 0.4);
+    border: 2px solid var(--primary-color);
+}
+
+.desktop-icon.selected .icon-label {
+    text-shadow: 0 0 10px rgba(0, 122, 255, 0.8), 0 0 20px rgba(0, 122, 255, 0.4);
+    background: rgba(0, 122, 255, 0.1);
+    border: 1px solid var(--primary-color);
+}
+
 .icon-image {
     width: 60px;
     height: 60px;
@@ -212,7 +222,7 @@ body {
     align-items: center;
     justify-content: center;
     background: var(--surface-color);
-    border-radius: 16px;
+    border-radius: 6px;
     box-shadow: var(--shadow);
     margin-bottom: 8px;
     transition: var(--transition);
@@ -232,6 +242,7 @@ body {
     border-radius: 6px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    transition: var(--transition);
 }
 
 /* Mobile Responsive Design */
