@@ -12,6 +12,7 @@ class DesktopEnvironment {
         this.apps = [];
         this.windows = [];
         this.lastOpenWindow = null;
+        this.currentContextMenu = null;
         
         // Initialize managers
         this.appManager = new AppManager(this);
@@ -29,6 +30,7 @@ class DesktopEnvironment {
     init() {
         this.setupEventListeners();
         this.setupDesktopContextMenu();
+        this.addSettingsIconToHeader();
         this.updateClock();
         this.loadAppsFromStorage();
         this.settingsManager.loadSettings();
@@ -39,6 +41,20 @@ class DesktopEnvironment {
         setInterval(() => this.updateClock(), 1000);
         
         console.log('Desktop Environment initialized');
+    }
+    
+    addSettingsIconToHeader() {
+        const timeDisplay = document.getElementById('timeDisplay');
+        const settingsBtn = document.createElement('button');
+        settingsBtn.className = 'settings-icon-btn';
+        settingsBtn.innerHTML = '⚙️';
+        settingsBtn.title = 'Settings';
+        
+        settingsBtn.addEventListener('click', () => {
+            this.modalManager.openModal('settingsModal');
+        });
+        
+        timeDisplay.parentNode.insertBefore(settingsBtn, timeDisplay);
     }
     
     setupEventListeners() {
@@ -61,18 +77,40 @@ class DesktopEnvironment {
             if (!e.target.closest('.search-container')) {
                 this.searchManager.hideResults();
             }
+            
+            // Clear icon selection when clicking on empty space
+            if (e.target === document.getElementById('desktopCanvas')) {
+                this.appManager.clearSelection();
+            }
+            
+            // Hide context menus
+            this.hideAllContextMenus();
         });
         
         // Global keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
+            if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
                 switch(e.key) {
                     case 'N':
-                        if (e.shiftKey) {
-                            e.preventDefault();
-                            this.modalManager.openModal('addModal');
+                        e.preventDefault();
+                        this.modalManager.openModal('addModal');
+                        break;
+                    case 'F4':
+                        e.preventDefault();
+                        if (this.windowManager.activeWindow) {
+                            const windowData = this.windowManager.windows.find(w => 
+                                w.element === this.windowManager.activeWindow
+                            );
+                            if (windowData) {
+                                this.windowManager.closeWindow(windowData.element, windowData);
+                            }
                         }
                         break;
+                }
+            }
+            
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
                     case ',':
                         e.preventDefault();
                         this.modalManager.openModal('settingsModal');
@@ -82,24 +120,33 @@ class DesktopEnvironment {
                         e.preventDefault();
                         document.getElementById('searchInput').focus();
                         break;
-                    case 'Tab':
-                        e.preventDefault();
-                        this.windowManager.cycleWindows();
-                        break;
+                }
+                
+                if (e.shiftKey && e.key === 'Tab') {
+                    e.preventDefault();
+                    this.windowManager.cycleWindows();
                 }
             }
             
             if (e.key === 'Escape') {
                 this.modalManager.closeAllModals();
-                this.contextMenuManager.hideMenu();
+                this.hideAllContextMenus();
                 this.searchManager.hideResults();
+                this.appManager.clearSelection();
             }
         });
-        
-        // Hide context menu on click
-        document.addEventListener('click', () => {
-            this.contextMenuManager.hideMenu();
+    }
+    
+    hideAllContextMenus() {
+        // Hide all context menus
+        document.querySelectorAll('.context-menu').forEach(menu => {
+            menu.classList.remove('active');
+            if (menu.classList.contains('desktop-context-menu')) {
+                menu.remove();
+            }
         });
+        this.contextMenuManager.hideMenu();
+        this.currentContextMenu = null;
     }
     
     setupDesktopContextMenu() {
@@ -132,6 +179,8 @@ class DesktopEnvironment {
     }
     
     showDesktopContextMenu(x, y) {
+        this.hideAllContextMenus();
+        
         const menu = document.createElement('div');
         menu.className = 'context-menu desktop-context-menu active';
         menu.style.left = `${x}px`;
@@ -159,6 +208,7 @@ class DesktopEnvironment {
         `;
         
         document.body.appendChild(menu);
+        this.currentContextMenu = menu;
         
         // Add event listeners
         menu.querySelector('#desktopNewApp').addEventListener('click', () => {
@@ -172,7 +222,7 @@ class DesktopEnvironment {
         });
         
         menu.querySelector('#desktopArrange').addEventListener('click', () => {
-            this.arrangeIcons();
+            this.appManager.arrangeIcons();
             menu.remove();
         });
         
@@ -180,11 +230,6 @@ class DesktopEnvironment {
             this.refreshDesktop();
             menu.remove();
         });
-        
-        // Remove menu when clicking elsewhere
-        setTimeout(() => {
-            document.addEventListener('click', () => menu.remove(), { once: true });
-        }, 100);
         
         // Adjust position if needed
         const rect = menu.getBoundingClientRect();
@@ -254,13 +299,13 @@ class DesktopEnvironment {
         }
         
         let timeString = now.toLocaleTimeString(
-            settings.language === 'tr' ? 'tr-TR' : 'en-US',
+            settings.language === 'en' ? 'en-US' : 'tr-TR',
             timeOptions
         );
         
         if (settings.showDate === 'true') {
             const dateString = now.toLocaleDateString(
-                settings.language === 'tr' ? 'tr-TR' : 'en-US',
+                settings.language === 'en' ? 'en-US' : 'tr-TR',
                 { day: '2-digit', month: '2-digit', year: 'numeric' }
             );
             timeString = `${dateString} ${timeString}`;
@@ -297,17 +342,45 @@ class DesktopEnvironment {
         const defaultApps = [
             {
                 id: 'welcome',
-                name: 'Hoş Geldiniz',
+                name: 'Welcome',
                 icon: '👋',
                 content: this.aiGenerator.generateWelcomeApp(),
                 position: { x: 50, y: 50 }
             },
             {
-                id: 'calculator',
-                name: 'Hesap Makinesi',
+                id: 'calc',
+                name: 'Calculator',
                 icon: '🧮',
                 content: this.aiGenerator.generateCalculatorApp(),
                 position: { x: 50, y: 180 }
+            },
+            {
+                id: 'notepad',
+                name: 'Notepad',
+                icon: '📝',
+                content: this.aiGenerator.generateNotepadApp(),
+                position: { x: 180, y: 50 }
+            },
+            {
+                id: 'paint',
+                name: 'Paint',
+                icon: '🎨',
+                content: this.aiGenerator.generatePaintApp(),
+                position: { x: 180, y: 180 }
+            },
+            {
+                id: 'browser',
+                name: 'Browser',
+                icon: '🌐',
+                content: this.aiGenerator.generateBrowserApp(),
+                position: { x: 310, y: 50 }
+            },
+            {
+                id: 'mediaplayer',
+                name: 'Media Player',
+                icon: '🎵',
+                content: this.aiGenerator.generateMediaPlayerApp(),
+                position: { x: 310, y: 180 }
             }
         ];
         

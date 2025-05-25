@@ -1,3 +1,4 @@
+
 export class ContextMenuManager {
     constructor(desktop) {
         this.desktop = desktop;
@@ -33,10 +34,16 @@ export class ContextMenuManager {
     }
     
     showMenu(x, y, appId) {
+        // Hide any existing context menus first
+        this.desktop.hideAllContextMenus();
+        
         this.currentAppId = appId;
         this.contextMenu.style.left = `${x}px`;
         this.contextMenu.style.top = `${y}px`;
         this.contextMenu.classList.add('active');
+        
+        // Mark as current menu
+        this.desktop.currentContextMenu = this.contextMenu;
         
         // Adjust position if menu goes off screen
         this.adjustMenuPosition();
@@ -45,6 +52,9 @@ export class ContextMenuManager {
     hideMenu() {
         this.contextMenu.classList.remove('active');
         this.currentAppId = null;
+        if (this.desktop.currentContextMenu === this.contextMenu) {
+            this.desktop.currentContextMenu = null;
+        }
     }
     
     adjustMenuPosition() {
@@ -70,6 +80,9 @@ export class ContextMenuManager {
         const app = this.desktop.apps.find(a => a.id === appId);
         if (!app) return;
         
+        // Close any open modals first
+        this.desktop.modalManager.closeAllModals();
+        
         // Open edit modal
         this.openEditModal(app);
     }
@@ -80,50 +93,53 @@ export class ContextMenuManager {
         editModal.className = 'modal active';
         editModal.id = 'editModal';
         
+        const presetApps = [
+            { icon: '📝', name: 'Notepad', prompt: 'Create a simple text editor with save/load functionality' },
+            { icon: '🧮', name: 'Calculator', prompt: 'Create a functional calculator with basic operations' },
+            { icon: '🎨', name: 'Paint', prompt: 'Create a simple drawing application with tools' },
+            { icon: '🌐', name: 'Browser', prompt: 'Create a simple web browser with navigation' },
+            { icon: '🎵', name: 'Media Player', prompt: 'Create a media player for audio files' },
+            { icon: '⏱️', name: 'Timer', prompt: 'Create a countdown timer and stopwatch' },
+            { icon: '🔒', name: 'Screen Saver', prompt: 'Create an animated screen saver' },
+            { icon: '📊', name: 'Charts', prompt: 'Create data visualization charts' },
+            { icon: '🎮', name: 'Game', prompt: 'Create a simple puzzle game' },
+            { icon: '📧', name: 'Email', prompt: 'Create an email client interface' }
+        ];
+        
+        const presetOptions = presetApps.map(preset => 
+            `<option value="${preset.icon}|${preset.name}|${preset.prompt}" ${app.icon === preset.icon ? 'selected' : ''}>${preset.icon} ${preset.name}</option>`
+        ).join('');
+        
         editModal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 data-tr="edit_app">Uygulamayı Düzenle</h2>
+                    <h2 data-tr="edit_app">Edit Application</h2>
                     <button class="modal-close">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form id="editAppForm">
                         <div class="form-group">
-                            <label for="editAppName" data-tr="app_name">Uygulama Adı:</label>
+                            <label for="presetSelect" data-tr="preset_apps">Preset Applications:</label>
+                            <select id="presetSelect">
+                                <option value="">-- Custom Application --</option>
+                                ${presetOptions}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editAppName" data-tr="app_name">Application Name:</label>
                             <input type="text" id="editAppName" value="${app.name}" required>
                         </div>
                         <div class="form-group">
-                            <label for="editAppIcon" data-tr="app_icon">Uygulama Simgesi:</label>
-                            <select id="editAppIcon">
-                                <option value="📱" ${app.icon === '📱' ? 'selected' : ''}>📱 Mobil</option>
-                                <option value="🧮" ${app.icon === '🧮' ? 'selected' : ''}>🧮 Hesap Makinesi</option>
-                                <option value="📝" ${app.icon === '📝' ? 'selected' : ''}>📝 Not Defteri</option>
-                                <option value="🎨" ${app.icon === '🎨' ? 'selected' : ''}>🎨 Sanat</option>
-                                <option value="📊" ${app.icon === '📊' ? 'selected' : ''}>📊 Grafik</option>
-                                <option value="🎮" ${app.icon === '🎮' ? 'selected' : ''}>🎮 Oyun</option>
-                                <option value="⚙️" ${app.icon === '⚙️' ? 'selected' : ''}>⚙️ Araç</option>
-                                <option value="🌐" ${app.icon === '🌐' ? 'selected' : ''}>🌐 Web</option>
-                                <option value="📧" ${app.icon === '📧' ? 'selected' : ''}>📧 E-posta</option>
-                                <option value="📷" ${app.icon === '📷' ? 'selected' : ''}>📷 Kamera</option>
-                                <option value="🎵" ${app.icon === '🎵' ? 'selected' : ''}>🎵 Müzik</option>
-                                <option value="🎬" ${app.icon === '🎬' ? 'selected' : ''}>🎬 Video</option>
-                                <option value="📁" ${app.icon === '📁' ? 'selected' : ''}>📁 Dosya</option>
-                                <option value="💬" ${app.icon === '💬' ? 'selected' : ''}>💬 Sohbet</option>
-                                <option value="🔐" ${app.icon === '🔐' ? 'selected' : ''}>🔐 Güvenlik</option>
-                                <option value="💰" ${app.icon === '💰' ? 'selected' : ''}>💰 Finans</option>
-                                <option value="📰" ${app.icon === '📰' ? 'selected' : ''}>📰 Haber</option>
-                                <option value="🏪" ${app.icon === '🏪' ? 'selected' : ''}>🏪 Alışveriş</option>
-                                <option value="🎯" ${app.icon === '🎯' ? 'selected' : ''}>🎯 Hedef</option>
-                                <option value="📈" ${app.icon === '📈' ? 'selected' : ''}>📈 Borsa</option>
-                            </select>
+                            <label for="editAppIcon" data-tr="app_icon">Application Icon:</label>
+                            <input type="text" id="editAppIcon" value="${app.icon}" required>
                         </div>
                         <div class="form-group">
                             <label for="editAppPrompt" data-tr="ai_prompt">AI Prompt:</label>
                             <textarea id="editAppPrompt" rows="4">${app.prompt || ''}</textarea>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn-secondary" id="editModalCancel" data-tr="cancel">İptal</button>
-                            <button type="submit" class="btn-primary" data-tr="save">Kaydet</button>
+                            <button type="button" class="btn-secondary" id="editModalCancel" data-tr="cancel">Cancel</button>
+                            <button type="submit" class="btn-primary" data-tr="save">Save</button>
                         </div>
                     </form>
                 </div>
@@ -138,8 +154,22 @@ export class ContextMenuManager {
         header.style.backgroundColor = themeColor;
         header.style.color = '#ffffff';
         
+        // Make modal draggable
+        this.desktop.modalManager.makeDraggable(editModal);
+        
         // Update translations
         this.desktop.languageManager.updateUI();
+        
+        // Setup preset selection
+        const presetSelect = editModal.querySelector('#presetSelect');
+        presetSelect.addEventListener('change', () => {
+            if (presetSelect.value) {
+                const [icon, name, prompt] = presetSelect.value.split('|');
+                document.getElementById('editAppIcon').value = icon;
+                document.getElementById('editAppName').value = name;
+                document.getElementById('editAppPrompt').value = prompt;
+            }
+        });
         
         // Setup event listeners
         const closeBtn = editModal.querySelector('.modal-close');
@@ -163,7 +193,7 @@ export class ContextMenuManager {
             const newIcon = document.getElementById('editAppIcon').value;
             const newPrompt = document.getElementById('editAppPrompt').value;
             
-            if (!newName) {
+            if (!newName || !newIcon) {
                 alert(this.desktop.languageManager.get('fill_all_fields'));
                 return;
             }
@@ -175,15 +205,8 @@ export class ContextMenuManager {
                 prompt: newPrompt
             });
             
-            // Update icon on desktop
-            const iconElement = document.querySelector(`[data-app-id="${app.id}"]`);
-            if (iconElement) {
-                iconElement.querySelector('.icon-image').textContent = newIcon;
-                iconElement.querySelector('.icon-label').textContent = newName;
-            }
-            
             // If content needs to be regenerated
-            if (newPrompt !== app.prompt) {
+            if (newPrompt && newPrompt !== app.prompt) {
                 this.desktop.aiGenerator.generateAppContent(app);
             }
             

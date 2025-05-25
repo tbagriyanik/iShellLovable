@@ -1,3 +1,4 @@
+
 export class WindowManager {
     constructor(desktop) {
         this.desktop = desktop;
@@ -51,7 +52,7 @@ export class WindowManager {
         
         // Add glass effect
         windowElement.style.backdropFilter = 'blur(10px)';
-        windowElement.style.background = 'rgba(255, 255, 255, 0.1)';
+        windowElement.style.background = 'rgba(255, 255, 255, 0.95)';
         windowElement.style.border = '1px solid rgba(255, 255, 255, 0.2)';
         
         // Add to windows array
@@ -68,6 +69,9 @@ export class WindowManager {
         
         // Setup window events
         this.setupWindowEvents(windowElement, windowData);
+        
+        // Make window resizable from all edges
+        this.makeResizable(windowElement, windowData);
         
         // Load app content
         this.loadAppContent(windowElement, app);
@@ -102,51 +106,90 @@ export class WindowManager {
         header.style.backgroundColor = themeColor;
         header.style.color = '#ffffff';
         
-        // Make window resizable
-        this.makeResizable(windowElement);
-        
         return windowElement;
     }
     
-    makeResizable(windowElement) {
-        const resizeHandle = document.createElement('div');
-        resizeHandle.className = 'resize-handle';
-        resizeHandle.style.cssText = `
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(-45deg, transparent 0px, transparent 6px, #666 6px, #666 10px, transparent 10px);
-            cursor: nw-resize;
-            z-index: 10;
-        `;
+    makeResizable(windowElement, windowData) {
+        // Create resize corner indicator
+        const resizeCorner = document.createElement('div');
+        resizeCorner.className = 'resize-corner';
+        windowElement.appendChild(resizeCorner);
         
-        windowElement.appendChild(resizeHandle);
+        // Create resize handles for all edges
+        const handles = [
+            { className: 'resize-n', cursor: 'n-resize' },
+            { className: 'resize-s', cursor: 's-resize' },
+            { className: 'resize-e', cursor: 'e-resize' },
+            { className: 'resize-w', cursor: 'w-resize' },
+            { className: 'resize-ne', cursor: 'ne-resize' },
+            { className: 'resize-nw', cursor: 'nw-resize' },
+            { className: 'resize-se', cursor: 'se-resize' },
+            { className: 'resize-sw', cursor: 'sw-resize' }
+        ];
         
+        handles.forEach(handle => {
+            const element = document.createElement('div');
+            element.className = `resize-handle ${handle.className}`;
+            element.style.cursor = handle.cursor;
+            windowElement.appendChild(element);
+            
+            this.setupResizeHandle(element, windowElement, windowData, handle.className);
+        });
+    }
+    
+    setupResizeHandle(handle, windowElement, windowData, direction) {
         let isResizing = false;
-        let startX, startY, startWidth, startHeight;
+        let startX, startY, startWidth, startHeight, startLeft, startTop;
         
-        resizeHandle.addEventListener('mousedown', (e) => {
+        const startResize = (e) => {
             isResizing = true;
             startX = e.clientX;
             startY = e.clientY;
-            startWidth = parseInt(document.defaultView.getComputedStyle(windowElement).width, 10);
-            startHeight = parseInt(document.defaultView.getComputedStyle(windowElement).height, 10);
+            
+            const rect = windowElement.getBoundingClientRect();
+            startWidth = rect.width;
+            startHeight = rect.height;
+            startLeft = rect.left;
+            startTop = rect.top;
             
             document.addEventListener('mousemove', handleResize);
             document.addEventListener('mouseup', stopResize);
             e.preventDefault();
-        });
+            e.stopPropagation();
+        };
         
         const handleResize = (e) => {
             if (!isResizing) return;
             
-            const newWidth = Math.max(200, startWidth + e.clientX - startX);
-            const newHeight = Math.max(200, startHeight + e.clientY - startY);
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            let newWidth = startWidth;
+            let newHeight = startHeight;
+            let newLeft = startLeft;
+            let newTop = startTop;
+            
+            if (direction.includes('e')) {
+                newWidth = Math.max(200, startWidth + deltaX);
+            }
+            if (direction.includes('w')) {
+                newWidth = Math.max(200, startWidth - deltaX);
+                newLeft = startLeft + deltaX;
+                if (newWidth === 200) newLeft = startLeft + startWidth - 200;
+            }
+            if (direction.includes('s')) {
+                newHeight = Math.max(200, startHeight + deltaY);
+            }
+            if (direction.includes('n')) {
+                newHeight = Math.max(200, startHeight - deltaY);
+                newTop = startTop + deltaY;
+                if (newHeight === 200) newTop = startTop + startHeight - 200;
+            }
             
             windowElement.style.width = newWidth + 'px';
             windowElement.style.height = newHeight + 'px';
+            windowElement.style.left = newLeft + 'px';
+            windowElement.style.top = newTop + 'px';
         };
         
         const stopResize = () => {
@@ -154,16 +197,19 @@ export class WindowManager {
             document.removeEventListener('mousemove', handleResize);
             document.removeEventListener('mouseup', stopResize);
             
-            // Save new size
-            const windowData = this.windows.find(w => w.element === windowElement);
-            if (windowData) {
-                windowData.size = {
-                    width: windowElement.offsetWidth,
-                    height: windowElement.offsetHeight
-                };
-                this.saveWindowState(windowData.appId, windowData);
-            }
+            // Save new size and position
+            windowData.size = {
+                width: windowElement.offsetWidth,
+                height: windowElement.offsetHeight
+            };
+            windowData.position = {
+                x: parseInt(windowElement.style.left),
+                y: parseInt(windowElement.style.top)
+            };
+            this.saveWindowState(windowData.appId, windowData);
         };
+        
+        handle.addEventListener('mousedown', startResize);
     }
     
     setupWindowEvents(windowElement, windowData) {
@@ -220,7 +266,7 @@ export class WindowManager {
             document.addEventListener('mouseup', handleMouseUp);
         });
         
-        // Window focus
+        // Window focus on any click
         windowElement.addEventListener('mousedown', () => {
             this.focusWindow(windowElement);
         });

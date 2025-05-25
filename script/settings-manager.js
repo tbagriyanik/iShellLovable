@@ -1,3 +1,4 @@
+
 export class SettingsManager {
     constructor(desktop) {
         this.desktop = desktop;
@@ -6,11 +7,17 @@ export class SettingsManager {
             backgroundColor: '#F2F2F7',
             fontFamily: 'system',
             iconSize: 80,
-            language: 'tr',
+            language: 'en',
             theme: 'light',
             timeFormat: '24',
             showSeconds: 'false',
-            showDate: 'false'
+            showDate: 'false',
+            apiKeys: {
+                openai: '',
+                claude: '',
+                deepseek: '',
+                openrouter: ''
+            }
         };
         this.settings = { ...this.defaultSettings };
     }
@@ -34,6 +41,14 @@ export class SettingsManager {
         const showSeconds = document.getElementById('showSeconds').value;
         const showDate = document.getElementById('showDate').value;
         
+        // Get API keys
+        const apiKeys = {
+            openai: document.getElementById('openaiKey')?.value || '',
+            claude: document.getElementById('claudeKey')?.value || '',
+            deepseek: document.getElementById('deepseekKey')?.value || '',
+            openrouter: document.getElementById('openrouterKey')?.value || ''
+        };
+        
         this.settings = {
             ...this.settings,
             themeColor,
@@ -43,7 +58,8 @@ export class SettingsManager {
             language,
             timeFormat,
             showSeconds,
-            showDate
+            showDate,
+            apiKeys
         };
         
         localStorage.setItem('desktop_settings', JSON.stringify(this.settings));
@@ -221,6 +237,22 @@ export class SettingsManager {
         document.getElementById('timeFormat').value = this.settings.timeFormat;
         document.getElementById('showSeconds').value = this.settings.showSeconds;
         document.getElementById('showDate').value = this.settings.showDate;
+        
+        // Load API keys
+        if (this.settings.apiKeys) {
+            if (document.getElementById('openaiKey')) {
+                document.getElementById('openaiKey').value = this.settings.apiKeys.openai || '';
+            }
+            if (document.getElementById('claudeKey')) {
+                document.getElementById('claudeKey').value = this.settings.apiKeys.claude || '';
+            }
+            if (document.getElementById('deepseekKey')) {
+                document.getElementById('deepseekKey').value = this.settings.apiKeys.deepseek || '';
+            }
+            if (document.getElementById('openrouterKey')) {
+                document.getElementById('openrouterKey').value = this.settings.apiKeys.openrouter || '';
+            }
+        }
     }
     
     resetSettings() {
@@ -231,7 +263,7 @@ export class SettingsManager {
             this.applySettings();
             this.loadSettingsToForm();
             
-            const successMessage = this.desktop.languageManager.get('data_imported');
+            const successMessage = this.desktop.languageManager.get('settings_reset');
             alert(successMessage);
         }
     }
@@ -267,7 +299,7 @@ export class SettingsManager {
                 const importedData = JSON.parse(e.target.result);
                 
                 // Check if it's settings or apps data
-                if (importedData.themeColor !== undefined) {
+                if (importedData.themeColor !== undefined || importedData.apiKeys !== undefined) {
                     // It's settings data
                     this.settings = { ...this.defaultSettings, ...importedData };
                     localStorage.setItem('desktop_settings', JSON.stringify(this.settings));
