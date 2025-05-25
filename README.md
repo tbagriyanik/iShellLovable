@@ -5,8 +5,6 @@
 Test address:
 **URL**: https://ishell.lovable.app
 
-Another test (not this repository):
-**URL**: https://ishell-desktop.lovable.app
 
 ## How can I edit this code?
 
